@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <title>복사 붙여넣기 연습</title>
+    <style>
+        /* 폰트 파일 불러오기 */
+body {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #c2662f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 110px 0 60px 0;
+            box-sizing: border-box;
+            font-family: 'ONEMobilePOP', sans-serif;
+            position: relative;
+        }
+
+        /* 🏠 왼쪽 상단 처음으로 버튼 */
+        .home-btn {
+            background-color: #FFF;
+            color: #c2662f;
+            border-color: #c2662f;
+            box-shadow: 0 6px 0 #f5c9a8;
+        }
+
+        /* 큰 제목 섹션 */
+        .header-section { text-align: center; margin-bottom: 50px; }
+        .main-title { font-size: 80px; color: #c2662f; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .sub-desc { font-size: 26px; background: white; padding: 15px 30px; border-radius: 40px; color: #a3552a; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        .container { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; max-width: 1150px; }
+
+        .card {
+            width: 250px;
+            height: 310px;
+            box-sizing: border-box;
+            background: white;
+            border-radius: 55px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(194, 102, 47, 0.2);
+            text-decoration: none;
+            transition: 0.3s;
+            position: relative;
+            border: 3px solid #ffe3cf;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            background-color: #fff8f2;
+            box-shadow: 0 20px 40px rgba(194, 102, 47, 0.35);
+            border-color: #c2662f;
+        }
+
+        .badge {
+            position: absolute;
+            top: 25px;
+            background-color: #ffe8d6;
+            color: #c2662f;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .icon { font-size: 90px; margin-top: 20px; margin-bottom: 10px; }
+        .title {
+            font-size: 28px;
+            color: #c2662f;
+            font-family: 'ONEMobilePOP', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+
+    <!-- 큰 제목 섹션 -->
+    <div class="header-section">
+        <div class="main-title">📋 복사 붙여넣기 놀이터</div>
+        <div class="sub-desc">어떤 복사 마법을 연습해 볼까요? 원하는 놀이를 골라보세요!</div>
+    </div>
+
+    <div class="container">
+        <!-- 마우스 연습 카드 (기존: 붕어빵) -->
+        <a href="copy_mouse_fish.html" class="card">
+            <div class="badge">마우스 연습</div>
+            <div class="icon">🐟</div>
+            <div class="title">붕어빵 복사</div>
+        </a>
+        
+        <!-- 키보드 연습 카드 (기존: 외계인) -->
+        <a href="copy_key_alien.html" class="card">
+            <div class="badge">키보드 연습</div>
+            <div class="icon">👽</div>
+            <div class="title">외계인 복사</div>
+        </a>
+
+        <!-- 동물 복사 붙여넣기 카드 (추가: 마우스) -->
+        <a href="copy_mouse_animal.html" class="card">
+            <div class="badge">마우스 연습</div>
+            <div class="icon">🦁</div>
+            <div class="title">동물 복사</div>
+        </a>
+
+        <!-- 과일 복사 붙여넣기 카드 (추가: 키보드) -->
+        <a href="copy_key_fruit.html" class="card">
+            <div class="badge">키보드 연습</div>
+            <div class="icon">🍎</div>
+            <div class="title">과일 복사</div>
+        </a>
+    </div>
+
+    <footer class="footer" style="color: #c2662f;"><span class="jj-footer">제작 : 잼잼클래쓰 ❤️ <a class="jj-yt" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="22" height="16" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#fff"/><path d="M11 5.5v9l7.5-4.5z" fill="#FF0033"/></svg>유튜브 채널 바로가기</a></span></footer>
+
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

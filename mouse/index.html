@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <title>마우스 놀이터</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/Pretendard-Regular.woff');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: linear-gradient(135deg, #fecfef 0%, #ff9a9e 100%);
+            margin: 0; padding: 110px 0 60px 0; color: #4a4a4a; min-height: 100vh; box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        }
+
+        /* 🏠 처음으로 버튼 */
+        .home-btn {
+            background-color: white;
+            color: #c2185b;
+            border-color: #c2185b;
+            box-shadow: 0 6px 0 #f5a8c9;
+        }
+
+        /* 중앙 정렬 헤더 (xy_menu와 동일한 구조) */
+        header { text-align: center; margin-bottom: 50px; }
+        header h1 { font-size: 80px; color: #c2185b; margin: 0 0 25px 0; font-family: 'ONEMobilePOP', sans-serif; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .sub-desc { font-size: 26px; background-color: white; padding: 15px 30px; border-radius: 40px; color: #636e72; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-family: 'ONEMobilePOP', sans-serif; }
+
+        /* xy_menu와 동일하게 자동 줄바꿈 (스크롤 없이 안 들어가면 다음 줄로) */
+        .card-container { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; max-width: 1150px; margin: 0 auto 50px auto; }
+        .card { background-color: white; border-radius: 55px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 25px 20px; box-sizing: border-box; text-align: center; width: 250px; height: 310px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border: 3px solid rgba(194, 24, 91, 0.15); transition: 0.3s; text-decoration: none; }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+
+        /* 카드별 연한 테두리 색상 (평소), hover 시 진하게 */
+        .card.pink { border-color: #ffe0f7; }
+        .card.mint { border-color: #d6f6fd; }
+        .card.yellow { border-color: #fff3d6; }
+        .card.purple { border-color: #ece7fd; }
+        .card.pink:hover { border-color: #ff9ff3; }
+        .card.mint:hover { border-color: #48dbfb; }
+        .card.yellow:hover { border-color: #feca57; }
+        .card.purple:hover { border-color: #a29bfe; }
+
+        .card-icon { font-size: 90px; margin-top: 15px; margin-bottom: 10px; }
+
+        .tag { font-size: 20px; font-weight: 800; padding: 8px 20px; border-radius: 20px; margin-bottom: 15px; }
+        .tag.pink { background-color: #ffeaa7; color: #d63031; }
+        .tag.mint { background-color: #c7ecee; color: #009432; }
+        .tag.yellow { background-color: #fef0cd; color: #f39c12; }
+        .tag.purple { background-color: #e0ece4; color: #5f27cd; }
+
+        .card h3 { font-size: 28px; color: #2d3436; margin: 0; font-family: 'ONEMobilePOP', sans-serif; }
+
+        .footer { color: #a4b0be; }
+    </style>
+</head>
+<body>
+
+
+    <header>
+        <h1>🖱️ 마우스 놀이터</h1>
+        <div class="sub-desc">어떤 마우스 마법을 연습해 볼까요? 원하는 놀이를 골라보세요!</div>
+    </header>
+
+    <div class="card-container">
+        <a href="mouse_smile.html" class="card pink">
+            <div class="tag pink">더블클릭 연습</div>
+            <div class="card-icon">😴</div>
+            <h3>스마일 깨우기</h3>
+        </a>
+        <a href="mouse_shuttle.html" class="card mint">
+            <div class="tag mint">마우스휠 연습</div>
+            <div class="card-icon">🚀</div>
+            <h3>우주선 왕복 여행</h3>
+        </a>
+        <a href="mouse_treasure.html" class="card yellow">
+            <div class="tag yellow">우클릭 연습</div>
+            <div class="card-icon">🎁</div>
+            <h3>비밀의 보물상자</h3>
+        </a>
+        <a href="mouse_dictation.html" class="card purple">
+            <div class="tag purple">드래그 연습</div>
+            <div class="card-icon">🦆</div>
+            <h3>마우스 받아쓰기</h3>
+        </a>
+    </div>
+
+    <footer class="footer"><span class="jj-footer">제작 : 잼잼클래쓰 ❤️ <a class="jj-yt" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="22" height="16" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#fff"/><path d="M11 5.5v9l7.5-4.5z" fill="#FF0033"/></svg>유튜브 채널 바로가기</a></span></footer>
+
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

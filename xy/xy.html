@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ 반짝반짝 별 찾기 ⭐</title>
+    <style>
+        /* 온라인 웹 폰트 연결 */
+body {
+            font-family: 'ONEMobilePOP', sans-serif;
+            background-color: #192a56; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden; 
+        }
+
+        #main-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: stretch; 
+        }
+
+        #sidebar {
+            background-color: #ffffff;
+            border: 6px solid #686de0; 
+            border-radius: 40px; 
+            padding: 30px;
+            box-shadow: none; 
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 { 
+            color: #ff4757; 
+            font-size: 46px; 
+            margin-bottom: 30px; 
+            margin-top: 0;
+            line-height: 1.2;
+            text-shadow: none; 
+        }
+
+        .info-box {
+            background-color: #f4f6f9;
+            width: 100%;
+            padding: 15px 0;
+            border-radius: 20px;
+            border: 3px dashed #a4b0be;
+            margin-bottom: 20px;
+            font-size: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box .label {
+            font-size: 22px;
+            color: #747d8c;
+        }
+
+        #mission-display { font-size: 38px; font-weight: bold; }
+        #score-display { color: #f0932b; font-weight: bold; font-size: 42px;}
+        #time-display { color: #eb4d4b; font-weight: bold; font-size: 42px;}
+
+        .sidebar-btn-group {
+            margin-top: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        #game-container {
+            background-color: #ffffff;
+            border: 6px solid #686de0; 
+            border-radius: 40px; 
+            padding: 20px;
+            box-shadow: none; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ⭐️ 1100x700 크기로 확장된 게임 영역 및 정중앙 그리드 정렬 */
+        #game-area {
+            background-color: #fdfbf7;
+            border: 4px solid #30336b; 
+            border-radius: 25px;
+            width: 1100px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+            
+            background-image: 
+                linear-gradient(to right, rgba(52, 73, 94, 0.25) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(52, 73, 94, 0.25) 1px, transparent 1px),
+                linear-gradient(to right, rgba(189, 195, 199, 0.4) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(189, 195, 199, 0.4) 1px, transparent 1px);
+            background-size: 
+                125px 125px, 125px 125px, 
+                25px 25px, 25px 25px;
+            background-position: 
+                550px 350px, 550px 350px, 
+                550px 350px, 550px 350px;
+        }
+
+        /* ⭐️ 두껍고 선명한 십자선 (정중앙 550px, 350px 위치) */
+        .axis { position: absolute; z-index: 5; pointer-events: none; }
+        .axis-x { 
+            background-color: #ff3838; 
+            width: 100%; height: 4px; 
+            top: 350px; left: 0; 
+            transform: translateY(-50%); 
+            box-shadow: 0 0 4px rgba(255, 56, 56, 0.5); 
+        }
+        .axis-y { 
+            background-color: #0984e3; 
+            width: 4px; height: 100%; 
+            left: 550px; top: 0; 
+            transform: translateX(-50%); 
+            box-shadow: 0 0 4px rgba(9, 132, 227, 0.5); 
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 18px;
+            color: #2c3e50;
+            pointer-events: none;
+            z-index: 6;
+            background: rgba(253, 251, 247, 0.9);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+        }
+
+        /* ⭐️ 연습 모드 안내선 (목표 좌표까지 반투명 점선) */
+        .guide-line { position: absolute; pointer-events: none; z-index: 4; }
+        .guide-line-x { top: 0; height: 100%; border-left: 6px dashed rgba(255, 56, 56, 0.35); transform: translateX(-50%); }
+        .guide-line-y { left: 0; width: 100%; border-top: 6px dashed rgba(9, 132, 227, 0.35); transform: translateY(-50%); }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 20; border-radius: 20px;
+        }
+        #result-overlay { display: none; }
+        #howto-overlay { display: none; }
+
+        .overlay h2 { font-size: 60px; color: #686de0; margin-bottom: 20px; text-shadow: none; }
+        .overlay p { font-size: 34px; color: #34495e; margin-bottom: 40px; }
+
+        /* ⭐️ 연습 모드 진입 시 좌표 읽는 법 안내 (그림+애니메이션, 2D 격자) */
+        .howto-back {
+            position: absolute; top: 20px; left: 20px; background: none; border: none;
+            font-family: 'ONEMobilePOP', sans-serif; font-size: 20px; color: #a4b0be; cursor: pointer;
+        }
+        .howto-diagram { position: relative; width: 340px; height: 400px; margin-top: 0; margin-bottom: 40px; }
+
+        .howto-caption { position: absolute; top: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 32px; font-weight: 900; font-family: 'ONEMobilePOP', sans-serif; opacity: 0; color: #686de0; }
+        .howto-caption-pos { animation: captionPos 12s ease-in-out infinite; }
+        .howto-caption-neg { animation: captionNeg 12s ease-in-out infinite; }
+        @keyframes captionPos { 0%, 3% { opacity: 0; } 6% { opacity: 1; } 47% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes captionNeg { 0%, 53% { opacity: 0; } 56% { opacity: 1; } 97% { opacity: 1; } 100% { opacity: 0; } }
+
+        .howto-grid-axis { position: absolute; }
+        .howto-grid-axis-x { left: 20px; top: 250px; width: 300px; height: 5px; background: #ff3838; }
+        .howto-grid-axis-y { left: 170px; top: 100px; width: 5px; height: 300px; background: #0984e3; }
+
+        .howto-grid-tick-x { position: absolute; top: 260px; transform: translateX(-50%); font-size: 18px; font-weight: 800; color: #a8b3c4; font-family: 'Arial', sans-serif; }
+        .howto-grid-tick-y { position: absolute; left: 178px; transform: translateY(-50%); font-size: 18px; font-weight: 800; color: #a8b3c4; font-family: 'Arial', sans-serif; }
+        .howto-grid-zero { color: #2c3e50 !important; font-weight: 700; font-size: 12px; }
+
+        .howto-tick-target-pos { animation: tickHighlightPos 12s ease-in-out infinite; }
+        .howto-tick-target-neg { animation: tickHighlightNeg 12s ease-in-out infinite; }
+        @keyframes tickHighlightPos {
+            0%, 3% { color: #a8b3c4; transform: scale(1); }
+            6% { color: #ff4757; transform: scale(1.3); }
+            10% { color: #ff4757; transform: scale(1.15); }
+            47% { color: #ff4757; transform: scale(1.15); }
+            50% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        @keyframes tickHighlightNeg {
+            0%, 53% { color: #a8b3c4; transform: scale(1); }
+            56% { color: #ff4757; transform: scale(1.3); }
+            60% { color: #ff4757; transform: scale(1.15); }
+            97% { color: #ff4757; transform: scale(1.15); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        .howto-tick-target-pos-y { animation: tickHighlightPosY 12s ease-in-out infinite; }
+        .howto-tick-target-neg-y { animation: tickHighlightNegY 12s ease-in-out infinite; }
+        @keyframes tickHighlightPosY {
+            0%, 3% { color: #a8b3c4; transform: scale(1); }
+            6% { color: #0984e3; transform: scale(1.3); }
+            10% { color: #0984e3; transform: scale(1.15); }
+            47% { color: #0984e3; transform: scale(1.15); }
+            50% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        @keyframes tickHighlightNegY {
+            0%, 53% { color: #a8b3c4; transform: scale(1); }
+            56% { color: #0984e3; transform: scale(1.3); }
+            60% { color: #0984e3; transform: scale(1.15); }
+            97% { color: #0984e3; transform: scale(1.15); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+
+        /* 목표까지 이어지는 점선 안내선 (실제 연습모드 안내선과 같은 스타일) */
+        .howto-guide-v { position: absolute; top: 100px; width: 0; height: 300px; border-left: 4px dashed rgba(255, 56, 56, 0.55); opacity: 0; }
+        .howto-guide-h { position: absolute; left: 20px; width: 300px; height: 0; border-top: 4px dashed rgba(9, 132, 227, 0.55); opacity: 0; }
+        .howto-guide-pos { animation: captionPos 12s ease-in-out infinite; }
+        .howto-guide-neg { animation: captionNeg 12s ease-in-out infinite; }
+
+        .howto-cursor { position: absolute; font-size: 34px; transform: translate(-50%, -50%); animation: cursorMove2D 12s ease-in-out infinite; z-index: 6; }
+        /* ⭐️ 손가락이 대각선으로 바로 가지 않고, X좌표만큼 먼저 이동한 뒤 Y좌표만큼 이동하도록 2단계로 분리 */
+        @keyframes cursorMove2D {
+            0%   { left: 170px; top: 250px; }
+            22%  { left: 170px; top: 250px; }
+            31%  { left: 300px; top: 250px; }
+            40%  { left: 300px; top: 120px; }
+            47%  { left: 300px; top: 120px; }
+            50%  { left: 170px; top: 250px; }
+            72%  { left: 170px; top: 250px; }
+            81%  { left: 40px;  top: 250px; }
+            90%  { left: 40px;  top: 380px; }
+            97%  { left: 40px;  top: 380px; }
+            100% { left: 170px; top: 250px; }
+        }
+
+        .howto-click-pulse { position: absolute; width: 26px; height: 26px; margin-left: -13px; margin-top: -13px; border: 4px solid #686de0; border-radius: 50%; opacity: 0; }
+        .howto-click-pos { left: 300px; top: 120px; animation: clickPulsePos 12s ease-in-out infinite; }
+        .howto-click-neg { left: 40px; top: 380px; animation: clickPulseNeg 12s ease-in-out infinite; }
+        @keyframes clickPulsePos { 0%, 39% { opacity: 0; transform: scale(0.3); } 41% { opacity: 1; transform: scale(1); } 46% { opacity: 0; transform: scale(2.2); } 100% { opacity: 0; } }
+        @keyframes clickPulseNeg { 0%, 89% { opacity: 0; transform: scale(0.3); } 91% { opacity: 1; transform: scale(1); } 96% { opacity: 0; transform: scale(2.2); } 100% { opacity: 0; } }
+
+        .howto-target-char { position: absolute; transform: translate(-50%, -75%); font-size: 48px; opacity: 0; }
+        .howto-star-pos { left: 300px; top: 120px; animation: starPopPos 12s ease-in-out infinite; }
+        .howto-star-neg { left: 40px; top: 380px; animation: starPopNeg 12s ease-in-out infinite; }
+        @keyframes starPopPos {
+            0%, 40% { opacity: 0; transform: translate(-50%, -75%) scale(0); }
+            43% { opacity: 1; transform: translate(-50%, -75%) scale(1.3); }
+            46% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            47% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            50% { opacity: 0; transform: translate(-50%, -75%) scale(0.5); }
+            100% { opacity: 0; }
+        }
+        @keyframes starPopNeg {
+            0%, 50%, 90% { opacity: 0; transform: translate(-50%, -75%) scale(0); }
+            93% { opacity: 1; transform: translate(-50%, -75%) scale(1.3); }
+            96% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            97% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -75%) scale(0.5); }
+        }
+        
+        /* 칭찬 메시지 스타일 */
+        #feedback-msg { font-size: 30px; color: #1e90ff; margin-top: 20px; margin-bottom: 40px; font-weight: bold; text-align: center; line-height: 1.4; }
+        
+        .big-action-button {
+            background-color: #686de0; color: white; border: none; border-radius: 30px;
+            padding: 15px 30px; font-size: 32px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; transition: all 0.1s;
+            box-shadow: none;
+            width: 100%;
+        }
+        .big-action-button:active { transform: scale(0.97); }
+
+        .info-btn {
+            background: none; border: 3px solid #686de0; color: #686de0; border-radius: 30px;
+            padding: 12px 26px; font-size: 20px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; margin-top: 22px;
+        }
+        .info-btn:active { transform: scale(0.97); }
+
+        .home-accent {
+            background-color: #f9ca24;
+            color: #2c3e50;
+            font-size: 26px;
+            padding: 12px 20px;
+        }
+
+        .click-marker {
+            position: absolute; width: 16px; height: 16px;
+            background-color: #e74c3c; border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 12px rgba(231, 76, 60, 0.9); z-index: 10;
+            animation: popOut 1s forwards;
+        }
+
+        .click-tooltip {
+            position: absolute; background-color: #30336b; color: white;
+            padding: 6px 12px; border-radius: 10px; font-size: 22px; font-family: 'ONEMobilePOP', sans-serif;
+            pointer-events: none; transform: translate(-50%, -150%); z-index: 11;
+            animation: popOut 1.5s forwards; white-space: nowrap;
+        }
+
+        .star-anim {
+            position: absolute; font-size: 70px; z-index: 9;
+            transform: translate(-50%, -50%); pointer-events: none;
+            animation: bounce 0.5s ease-out;
+        }
+
+        @keyframes popOut { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes bounce { 0% { transform: translate(-50%, -50%) scale(0); } 50% { transform: translate(-50%, -50%) scale(1.5); } 100% { transform: translate(-50%, -50%) scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="main-wrapper">
+        <div id="sidebar">
+            <h1>⭐ 반짝반짝<br>별 찾기</h1>
+            
+            <div class="info-box">
+                <span class="label">🎯 목표 좌표</span>
+                <span id="mission-display">준비...</span>
+            </div>
+            
+            <div class="info-box">
+                <span class="label">⭐ 찾은 별 갯수</span>
+                <div><span id="score-display">0</span>개</div>
+            </div>
+            
+            <div class="info-box">
+                <span class="label">⏰ 남은 시간</span>
+                <span id="time-display">60초</span>
+            </div>
+
+            <div class="sidebar-btn-group">
+                <button id="end-practice-btn" class="big-action-button" onclick="endGame()" style="display: none; background-color: #1e90ff;">✅ 연습 끝내기</button>
+                <!-- 선택 메뉴 페이지로 돌아가도록 링크 수정 -->
+                <button class="big-action-button home-accent" onclick="location.href='./'">🏠 처음으로 </button>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <div id="game-area">
+                <div class="axis axis-x"></div>
+                <div class="axis axis-y"></div>
+                
+                <div id="start-overlay" class="overlay">
+                    <h2>⭐ 3단계: XY좌표 별 찾기!</h2>
+                    <p>원하는 모드를 골라 시작하세요!</p>
+                    <div style="display: flex; gap: 20px;">
+                        <button class="big-action-button" onclick="showHowTo()" style="width: auto; padding: 20px 40px; font-size: 28px; background-color: #1e90ff; line-height: 1.6;">🔰 연습 모드<br><span style="font-size: 16px; font-weight: normal;">안내선 O · 시간제한 X</span></button>
+                        <button class="big-action-button" onclick="startGame('challenge')" style="width: auto; padding: 20px 40px; font-size: 28px; line-height: 1.6;">🔥 도전 모드<br><span style="font-size: 16px; font-weight: normal;">안내선 X · 60초</span></button>
+                    </div>
+                    <button class="info-btn" onclick="showHowToInfo()">❓ X/Y좌표 읽는 법만 보기</button>
+                </div>
+
+                <div id="howto-overlay" class="overlay">
+                    <button class="howto-back" onclick="showStartOverlay()">‹ 뒤로</button>
+                    <h2 style="font-size: 38px; margin-top: 0; margin-bottom: 2px; color: #30336b;">🔎 X / Y좌표 읽는 법</h2>
+                    <div class="howto-diagram">
+                        <div class="howto-caption howto-caption-pos">🎯 목표좌표 (200, 100)</div>
+                        <div class="howto-caption howto-caption-neg">🎯 목표좌표 (-200, -100)</div>
+
+                        <div class="howto-guide-v howto-guide-pos" style="left:300px;"></div>
+                        <div class="howto-guide-h howto-guide-pos" style="top:120px;"></div>
+                        <div class="howto-guide-v howto-guide-neg" style="left:40px;"></div>
+                        <div class="howto-guide-h howto-guide-neg" style="top:380px;"></div>
+
+                        <div class="howto-grid-axis howto-grid-axis-x"></div>
+                        <div class="howto-grid-axis howto-grid-axis-y"></div>
+
+                        <div class="howto-grid-tick-x howto-tick-target-neg" style="left:40px;">-200</div>
+                        <div class="howto-grid-tick-x howto-grid-zero" style="left:170px;">(0,0)</div>
+                        <div class="howto-grid-tick-x howto-tick-target-pos" style="left:300px;">200</div>
+
+                        <div class="howto-grid-tick-y howto-tick-target-pos-y" style="top:120px;">100</div>
+                        <div class="howto-grid-tick-y howto-tick-target-neg-y" style="top:380px;">-100</div>
+
+                        <div class="howto-click-pulse howto-click-pos"></div>
+                        <div class="howto-target-char howto-star-pos">🌟</div>
+
+                        <div class="howto-click-pulse howto-click-neg"></div>
+                        <div class="howto-target-char howto-star-neg">🌟</div>
+
+                        <div class="howto-cursor">👆</div>
+                    </div>
+                    <button id="howto-start-btn" class="big-action-button" onclick="startGame('practice')" style="width: auto; padding: 16px 46px; font-size: 30px;">이해했어요! 시작하기 🚀</button>
+                    <button id="howto-close-btn" class="big-action-button" onclick="showStartOverlay()" style="width: auto; padding: 16px 46px; font-size: 30px; background-color:#a4b0be; display:none;">확인했어요! 닫기</button>
+                </div>
+
+                <div id="result-overlay" class="overlay">
+                    <h2>탐험 종료!</h2>
+                    <p style="margin-bottom: 20px;">내가 찾은 별: <span id="final-score" style="color:#e74c3c; font-weight:bold;">0</span> 개!</p>
+                    <p id="feedback-msg"></p>
+                    <button id="next-btn" class="big-action-button" onclick="location.href='xy_write.html'" style="width: auto; padding: 20px 60px; font-size: 40px; background-color:#2ed573; display:none;">➡️ 다음 단계로</button>
+                    <button id="retry-btn" class="big-action-button" onclick="showStartOverlay()" style="width: auto; padding: 20px 60px; font-size: 40px;">다시 탐험하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const missionDisplay = document.getElementById('mission-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const timeDisplay = document.getElementById('time-display');
+        const startOverlay = document.getElementById('start-overlay');
+        const howtoOverlay = document.getElementById('howto-overlay');
+        const resultOverlay = document.getElementById('result-overlay');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const endPracticeBtn = document.getElementById('end-practice-btn');
+        const howtoStartBtn = document.getElementById('howto-start-btn');
+        const howtoCloseBtn = document.getElementById('howto-close-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        const TARGET_SCORE = 10;
+
+        /* ⭐️ 1100x700 크기에 맞춘 정중앙 좌표 설정 */
+        const CENTER_X = 550;
+        const CENTER_Y = 350;
+        const SCALE = 2.5; 
+
+        function drawAxisLabels() {
+            for (let x = -200; x <= 200; x += 50) {
+                let label = document.createElement('div');
+                label.className = 'axis-label';
+                label.textContent = x === 0 ? '(0,0)' : x;
+                label.style.color = '#ff4757'; 
+                
+                label.style.left = (x * SCALE + CENTER_X) + 'px';
+                label.style.top = (CENTER_Y + 8) + 'px'; 
+                
+                label.style.transform = x === 0 ? 'translate(8px, 8px)' : 'translateX(-50%)'; 
+                gameArea.appendChild(label);
+            }
+
+            for (let y = -100; y <= 100; y += 50) {
+                if (y !== 0) {
+                    let label = document.createElement('div');
+                    label.className = 'axis-label';
+                    label.textContent = y;
+                    label.style.color = '#1e90ff'; 
+                    
+                    label.style.left = (CENTER_X + 8) + 'px';
+                    label.style.top = (-y * SCALE + CENTER_Y) + 'px';
+                    label.style.transform = 'translateY(-50%)';
+                    gameArea.appendChild(label);
+                }
+            }
+        }
+        drawAxisLabels();
+        showHowToInfo(); // ⭐️ 다른 단계들처럼, 게임을 시작하기 전에 좌표 읽는 법 안내를 먼저 보여줌
+
+        let score = 0;
+        let timeLeft = 60;
+        let gameInterval;
+        let targetX = 0;
+        let targetY = 0;
+        let isPracticeMode = false;
+        let targetHit = false; // ⭐️ 연타 방지: 정답을 맞춘 뒤 다음 문제로 넘어갈 때까지 추가 클릭을 무시
+        let missCooldown = false; // ⭐️ 연타 방지: 틀린 곳을 클릭한 뒤 잠깐 동안 클릭을 무시 (아무 데나 마구 누르기 방지)
+        const MISS_COOLDOWN_MS = 700;
+
+        const xOptions = [-200, -150, -100, -50, 0, 50, 100, 150, 200];
+        const yOptions = [-100, -50, 0, 50, 100];
+
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                const now = audioCtx.currentTime;
+                if(type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1046.50, now); 
+                    osc.frequency.setValueAtTime(1318.51, now + 0.1); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now); osc.stop(now + 0.5);
+                } else if(type === 'miss') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                }
+            } catch(e) {}
+        }
+
+        function showHowTo() {
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'flex';
+            howtoStartBtn.style.display = 'block';
+            howtoCloseBtn.style.display = 'none';
+        }
+
+        function showHowToInfo() {
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'flex';
+            howtoStartBtn.style.display = 'none';
+            howtoCloseBtn.style.display = 'block';
+        }
+
+        function startGame(mode) {
+            isPracticeMode = mode === 'practice';
+            score = 0;
+            timeLeft = 60;
+            scoreDisplay.textContent = score;
+
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'none';
+            resultOverlay.style.display = 'none';
+
+            document.querySelectorAll('.click-marker, .click-tooltip, .star-anim, .guide-line').forEach(el => el.remove());
+
+            clearInterval(gameInterval);
+            if (isPracticeMode) {
+                timeDisplay.textContent = '연습 중';
+                endPracticeBtn.style.display = 'block';
+            } else {
+                timeDisplay.textContent = timeLeft + '초';
+                endPracticeBtn.style.display = 'none';
+                gameInterval = setInterval(updateTime, 1000);
+            }
+
+            setNewTarget();
+        }
+
+        function showStartOverlay() {
+            clearInterval(gameInterval);
+            endPracticeBtn.style.display = 'none';
+            document.querySelectorAll('.click-marker, .click-tooltip, .star-anim, .guide-line').forEach(el => el.remove());
+            howtoOverlay.style.display = 'none';
+            resultOverlay.style.display = 'none';
+            startOverlay.style.display = 'flex';
+        }
+
+        function updateTime() {
+            timeLeft--;
+            timeDisplay.textContent = timeLeft + '초';
+            if (timeLeft <= 0) endGame();
+        }
+
+        function setNewTarget() {
+            document.querySelectorAll('.guide-line').forEach(el => el.remove());
+            targetHit = false; // ⭐️ 새 문제가 나오면 다시 클릭을 받을 수 있도록 잠금 해제
+
+            targetX = xOptions[Math.floor(Math.random() * xOptions.length)];
+            targetY = yOptions[Math.floor(Math.random() * yOptions.length)];
+
+            missionDisplay.innerHTML = `(<span style="color:#ff4757;">${targetX}</span>, <span style="color:#1e90ff;">${targetY}</span>)`;
+
+            if (isPracticeMode) drawGuideLines(targetX, targetY);
+        }
+
+        function drawGuideLines(x, y) {
+            const vLine = document.createElement('div');
+            vLine.className = 'guide-line guide-line-x';
+            vLine.style.left = (x * SCALE + CENTER_X) + 'px';
+            gameArea.appendChild(vLine);
+
+            const hLine = document.createElement('div');
+            hLine.className = 'guide-line guide-line-y';
+            hLine.style.top = (-y * SCALE + CENTER_Y) + 'px';
+            gameArea.appendChild(hLine);
+        }
+
+        gameArea.addEventListener('click', function(e) {
+            // ⭐️ 시작/결과 오버레이 버튼 클릭 시 오작동 방지
+            if (e.target.closest('#start-overlay') || e.target.closest('#result-overlay') || e.target.closest('#howto-overlay')) return;
+
+            if (timeLeft <= 0 || startOverlay.style.display !== 'none') return;
+            if (targetHit) return; // ⭐️ 이미 정답을 맞혀 다음 문제로 넘어가는 중이면 연타로 인한 중복 채점을 막음
+            if (missCooldown) return; // ⭐️ 방금 틀렸으면 잠깐 기다렸다가 다시 클릭
+
+            const rect = gameArea.getBoundingClientRect();
+            const clickX_px = e.clientX - rect.left;
+            const clickY_px = e.clientY - rect.top;
+
+            let mathX = (clickX_px - CENTER_X) / SCALE;
+            let mathY = -(clickY_px - CENTER_Y) / SCALE;
+
+            mathX = Math.round(mathX / 10) * 10;
+            mathY = Math.round(mathY / 10) * 10;
+
+            if(mathX < -220 || mathX > 220 || mathY < -120 || mathY > 120) return;
+
+            if (mathX === targetX && mathY === targetY) {
+                targetHit = true; // ⭐️ 정답 처리 즉시 잠금 (setNewTarget에서 다시 풀림)
+                playSound('success');
+                score++;
+                scoreDisplay.textContent = score;
+
+                const star = document.createElement('div');
+                star.className = 'star-anim';
+                star.textContent = '🌟'; 
+                
+                star.style.left = (targetX * SCALE + CENTER_X) + 'px';
+                star.style.top = (-targetY * SCALE + CENTER_Y) + 'px';
+                gameArea.appendChild(star);
+
+                setTimeout(() => {
+                    star.remove();
+                    setNewTarget();
+                }, 800);
+                
+            } else {
+                playSound('miss');
+                missCooldown = true; // ⭐️ 틀리면 잠깐 클릭 잠금
+                setTimeout(() => { missCooldown = false; }, MISS_COOLDOWN_MS);
+                
+                const marker = document.createElement('div');
+                marker.className = 'click-marker';
+                marker.style.left = (mathX * SCALE + CENTER_X) + 'px';
+                marker.style.top = (-mathY * SCALE + CENTER_Y) + 'px';
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'click-tooltip';
+                tooltip.textContent = `여긴 (${mathX}, ${mathY})`;
+                tooltip.style.left = (mathX * SCALE + CENTER_X) + 'px';
+                tooltip.style.top = (-mathY * SCALE + CENTER_Y) + 'px';
+
+                gameArea.appendChild(marker);
+                gameArea.appendChild(tooltip);
+
+                setTimeout(() => { marker.remove(); tooltip.remove(); }, 1500);
+            }
+        });
+
+        function endGame() {
+            clearInterval(gameInterval);
+            document.getElementById('final-score').textContent = score;
+            endPracticeBtn.style.display = 'none';
+            document.querySelectorAll('.guide-line').forEach(el => el.remove());
+
+            if (isPracticeMode) {
+                feedbackMsg.innerHTML = "연습 잘했어요!<br>이제 도전 모드에서 실력을 확인해볼까요? 🔥";
+                feedbackMsg.style.color = "#1e90ff";
+            } else if (score >= TARGET_SCORE) {
+                feedbackMsg.innerHTML = "와우! 완벽한 좌표 마스터네요!<br>(X, Y) 위치 찾기는 이제 문제없어요! 🚀";
+                feedbackMsg.style.color = "#ff4757";
+            } else if (score >= 10) {
+                feedbackMsg.innerHTML = "참 잘했어요!<br>목표 좌표를 아주 정확하게 짚어냈어요! 👏";
+                feedbackMsg.style.color = "#f0932b";
+            } else if (score >= 5) {
+                feedbackMsg.innerHTML = "좋아요!<br>X축과 Y축이 만나는 점을 찾는 연습을<br>조금만 더 해볼까요? 😉";
+                feedbackMsg.style.color = "#1e90ff";
+            } else {
+                feedbackMsg.innerHTML = "아쉬워요!<br>(X, Y) 좌표를 보고 정확한 위치를 찾는<br>연습을 해봐요! 💪";
+                feedbackMsg.style.color = "#747d8c";
+            }
+
+            if (isPracticeMode) {
+                nextBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+            } else if (score >= TARGET_SCORE) {
+                nextBtn.style.display = 'block';
+                retryBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+            }
+
+            resultOverlay.style.display = 'flex';
+        }
+    </script>
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <a class="jj-badge" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>제작 : 잼잼클래쓰 ❤️ | <span>유튜브 채널 바로가기</span></a>
+</body>
+</html>

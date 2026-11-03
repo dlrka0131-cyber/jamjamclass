@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⌨️ 화살표 키 좌표 점프! ⌨️</title>
+    <style>
+        body {
+            font-family: 'ONEMobilePOP', sans-serif;
+            background-color: #192a56;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        #main-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: stretch;
+        }
+
+        #sidebar {
+            background-color: #ffffff;
+            border: 6px solid #686de0;
+            border-radius: 40px;
+            padding: 30px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff4757;
+            font-size: 36px;
+            margin-bottom: 30px;
+            margin-top: 0;
+            line-height: 1.2;
+        }
+
+        .info-box {
+            background-color: #f4f6f9;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px 0;
+            border-radius: 20px;
+            border: 3px dashed #a4b0be;
+            margin-bottom: 20px;
+            font-size: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box .label { font-size: 22px; color: #747d8c; }
+
+        #mission-display { font-size: 36px; font-weight: bold; }
+
+        /* 현재 내 위치 (X=빨강, Y=파랑 축 색상과 통일) */
+        #current-pos { font-size: 30px; font-weight: bold; }
+        .coord-x { color: #ff4757; }
+        .coord-y { color: #0984e3; }
+
+        #score-display { color: #2ed573; font-weight: bold; font-size: 42px; }
+        #time-display { color: #eb4d4b; font-weight: bold; font-size: 42px; }
+
+        .sidebar-btn-group { margin-top: auto; display: flex; flex-direction: column; gap: 15px; width: 100%; }
+
+        #game-container {
+            background-color: #ffffff;
+            border: 6px solid #686de0;
+            border-radius: 40px;
+            padding: 20px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-area {
+            background-color: #fdfbf7;
+            border: 4px solid #30336b;
+            border-radius: 25px;
+            width: 1100px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+            background-image:
+                linear-gradient(to right, rgba(189, 195, 199, 0.5) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(189, 195, 199, 0.5) 1px, transparent 1px);
+            background-size: 50px 50px, 50px 50px;
+            background-position: 550px 350px, 550px 350px;
+        }
+
+        .axis { position: absolute; z-index: 5; pointer-events: none; }
+        .axis-x { background-color: #ff3838; width: 100%; height: 4px; top: 350px; left: 0; transform: translateY(-50%); box-shadow: 0 0 4px rgba(255, 56, 56, 0.5); }
+        .axis-y { background-color: #0984e3; width: 4px; height: 100%; left: 550px; top: 0; transform: translateX(-50%); box-shadow: 0 0 4px rgba(9, 132, 227, 0.5); }
+
+        .axis-label {
+            position: absolute; font-size: 16px; color: #2c3e50; pointer-events: none; z-index: 6;
+            background: rgba(253, 251, 247, 0.9); padding: 1px 5px; border-radius: 6px;
+            font-family: 'Arial', sans-serif; font-weight: bold;
+        }
+
+        #player {
+            position: absolute; width: 50px; height: 50px; font-size: 40px;
+            display: flex; align-items: center; justify-content: center;
+            transform: translate(-50%, -50%); z-index: 9;
+            transition: left 0.15s ease-out, top 0.15s ease-out;
+        }
+
+        #target-marker {
+            position: absolute; width: 50px; height: 50px; font-size: 36px;
+            display: flex; align-items: center; justify-content: center;
+            transform: translate(-50%, -50%); z-index: 8;
+            animation: floatFlag 1s ease-in-out infinite;
+        }
+
+        @keyframes floatFlag { 0%,100% { transform: translate(-50%, -55%); } 50% { transform: translate(-50%, -45%); } }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 20; border-radius: 20px;
+        }
+        #result-overlay { display: none; }
+
+        .overlay h2 { font-size: 55px; color: #ff4757; margin-bottom: 20px; }
+        .overlay p { font-size: 30px; color: #34495e; margin-bottom: 30px; text-align: center; line-height: 1.5; }
+
+        /* 키 → 효과를 문장 대신 그림으로 보여주는 규칙 카드 (2x2) */
+        .rule-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 25px; }
+        .rule-card {
+            width: 150px; padding: 16px 0; border-radius: 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .rule-card.rule-x { background: #ffe4e6; }
+        .rule-card.rule-y { background: #dbeafe; }
+        .rule-key {
+            width: 60px; height: 60px; border-radius: 16px; background: #ffffff; color: #2f3640;
+            display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900;
+            box-shadow: 3px 3px 0 #cbd5e1;
+        }
+        .rule-effect { font-size: 28px; font-weight: 900; }
+        .rule-x .rule-effect { color: #ff4757; }
+        .rule-y .rule-effect { color: #0984e3; }
+        .short-tip { font-size: 26px; color: #34495e; margin-bottom: 25px; }
+
+        #feedback-msg { font-size: 28px; color: #1e90ff; margin-top: 10px; margin-bottom: 30px; font-weight: bold; text-align: center; line-height: 1.4; }
+
+        /* ⭐️ 좌표 읽는 법 안내 모달 */
+        .info-btn {
+            background: none; border: 3px solid #ff4757; color: #ff4757; border-radius: 30px;
+            padding: 12px 26px; font-size: 22px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; margin-top: 18px;
+        }
+        .info-btn:active { transform: scale(0.97); }
+        #start-overlay { display: none; }
+        #howto-overlay { display: block; background: #ffffff; }
+
+        /* 글자 대신 그림+애니메이션으로 보여주는 X/Y좌표 + 화살표키 사용법 (2D 격자) */
+        /* X를 먼저 천천히 한 칸씩(1) 이동한 뒤, 그 자리에서 Y를 천천히 한 칸씩(1) 이동 — steps()로 딱-딱-딱 표현 */
+        /* 전체 46초 주기: 목표 안내 → "X부터 읽고 이동" 멘트(대기) → X 이동(느리게) → "Y로 이동" 멘트(대기) → Y 이동(느리게) → 도착! */
+        /* 좌상단: 타이틀 → 목표좌표 → 단계 멘트 → 키보드 그림 순서로 세로 배치 */
+        .howto-title-tl { position: absolute; top: 20px; left: 32px; font-size: 32px; margin: 0; color: #30336b; text-align: left; }
+
+        .howto-diagram { position: absolute; left: 330px; top: 20px; width: 700px; height: 650px; }
+
+        .howto-caption { position: absolute; top: 100px; left: 32px; white-space: nowrap; font-size: 50px; font-weight: 900; font-family: 'ONEMobilePOP', sans-serif; opacity: 0; color: #30336b; }
+        .howto-caption .tx { color: #ff4757; }
+        .howto-caption .ty { color: #0984e3; }
+        .howto-caption-pos { animation: captionPos 46s ease-in-out infinite; }
+        .howto-caption-neg { animation: captionNeg 46s ease-in-out infinite; }
+        @keyframes captionPos {
+            0%, 0.65% { opacity: 0; }
+            0.87% { opacity: 1; }
+            48.91% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes captionNeg {
+            0%, 50.65% { opacity: 0; }
+            50.87% { opacity: 1; }
+            98.91% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* 단계별 안내 멘트: "X부터 읽고 이동해요" → (이동) → "이제 Y로 이동해요" → (이동). 양/음 구간에서 동일한 문구가 두 번 반복 재생 */
+        .howto-step-caption {
+            position: absolute; top: 200px; left: 32px;            font-size: 32px; font-weight: 900; font-family: 'ONEMobilePOP', sans-serif;
+            line-height: 1.35; opacity: 0; color: #30336b;
+        }
+        .howto-step-1 { animation: stepCap1 30s ease-in-out infinite; }
+        .howto-step-2 { animation: stepCap2 30s ease-in-out infinite; }
+        @keyframes stepCap1 {
+            0%, 5% { opacity: 0; }
+            5.22% { opacity: 1; }
+            24.78% { opacity: 1; }
+            25.43% { opacity: 0; }
+            55% { opacity: 0; }
+            55.22% { opacity: 1; }
+            74.78% { opacity: 1; }
+            75.43% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        @keyframes stepCap2 {
+            0%, 25.87% { opacity: 0; }
+            26.09% { opacity: 1; }
+            45.65% { opacity: 1; }
+            46.3% { opacity: 0; }
+            75.87% { opacity: 0; }
+            76.09% { opacity: 1; }
+            95.65% { opacity: 1; }
+            96.3% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        .howto-key-icon {
+            position: absolute; top: 300px; left: 100px;
+            width: 78px; height: 78px; border-radius: 20px; background: #ffffff;
+            display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 900;
+            box-shadow: 4px 4px 0 #cbd5e1; opacity: 0;
+        }
+        .howto-key-x { color: #ff4757; border: 4px solid #ff4757; }
+        .howto-key-y { color: #0984e3; border: 4px solid #0984e3; }
+        .howto-key-x-pos { animation: keyXPos 30s ease-in-out infinite, keyXBlinkPos 30s steps(1, end) infinite; }
+        .howto-key-y-pos { animation: keyYPos 30s ease-in-out infinite, keyYBlinkPos 30s steps(1, end) infinite; }
+        .howto-key-x-neg { animation: keyXNeg 30s ease-in-out infinite, keyXBlinkNeg 30s steps(1, end) infinite; }
+        .howto-key-y-neg { animation: keyYNeg 30s ease-in-out infinite, keyYBlinkNeg 30s steps(1, end) infinite; }
+        @keyframes keyXPos { 0%, 9.35% { opacity: 0; } 9.57% { opacity: 1; } 24.78% { opacity: 1; } 25.43% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes keyYPos { 0%, 30.22% { opacity: 0; } 30.43% { opacity: 1; } 45.65% { opacity: 1; } 46.3% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes keyXNeg { 0%, 59.35% { opacity: 0; } 59.57% { opacity: 1; } 74.78% { opacity: 1; } 75.43% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes keyYNeg { 0%, 80.22% { opacity: 0; } 80.43% { opacity: 1; } 95.65% { opacity: 1; } 96.3% { opacity: 0; } 100% { opacity: 0; } }
+
+        /* 화살표 키: 한 칸(1) 이동할 때마다 노랗게 반짝! (X 단계 5번, Y 단계 5번, 천천히) */
+        @keyframes keyXBlinkPos {
+            0%, 9.13% { background-color: #ffffff; }
+            12.07% { background-color: #ffe066; }
+            12.93% { background-color: #ffffff; }
+            15.11% { background-color: #ffe066; }
+            15.98% { background-color: #ffffff; }
+            18.15% { background-color: #ffe066; }
+            19.02% { background-color: #ffffff; }
+            21.2% { background-color: #ffe066; }
+            22.07% { background-color: #ffffff; }
+            24.24% { background-color: #ffe066; }
+            25.11%, 100% { background-color: #ffffff; }
+        }
+        @keyframes keyYBlinkPos {
+            0%, 30% { background-color: #ffffff; }
+            32.93% { background-color: #ffe066; }
+            33.8% { background-color: #ffffff; }
+            35.98% { background-color: #ffe066; }
+            36.85% { background-color: #ffffff; }
+            39.02% { background-color: #ffe066; }
+            39.89% { background-color: #ffffff; }
+            42.07% { background-color: #ffe066; }
+            42.93% { background-color: #ffffff; }
+            45.11% { background-color: #ffe066; }
+            45.98%, 100% { background-color: #ffffff; }
+        }
+        @keyframes keyXBlinkNeg {
+            0%, 59.13% { background-color: #ffffff; }
+            62.07% { background-color: #ffe066; }
+            62.93% { background-color: #ffffff; }
+            65.11% { background-color: #ffe066; }
+            65.98% { background-color: #ffffff; }
+            68.15% { background-color: #ffe066; }
+            69.02% { background-color: #ffffff; }
+            71.2% { background-color: #ffe066; }
+            72.07% { background-color: #ffffff; }
+            74.24% { background-color: #ffe066; }
+            75.11%, 100% { background-color: #ffffff; }
+        }
+        @keyframes keyYBlinkNeg {
+            0%, 80% { background-color: #ffffff; }
+            82.93% { background-color: #ffe066; }
+            83.8% { background-color: #ffffff; }
+            85.98% { background-color: #ffe066; }
+            86.85% { background-color: #ffffff; }
+            89.02% { background-color: #ffe066; }
+            89.89% { background-color: #ffffff; }
+            92.07% { background-color: #ffe066; }
+            92.93% { background-color: #ffffff; }
+            95.11% { background-color: #ffe066; }
+            95.98%, 100% { background-color: #ffffff; }
+        }
+
+        .howto-grid-axis { position: absolute; background: #cbd5e1; }
+        .howto-grid-axis-x { left: 75px; top: 322px; width: 550px; height: 6px; background: #ff3838; }
+        .howto-grid-axis-y { left: 347px; top: 50px; width: 6px; height: 550px; background: #0984e3; }
+
+        /* X좌표 눈금=빨간색, Y좌표 눈금=파란색으로 구분 */
+        .howto-grid-tick-x { position: absolute; top: 330px; transform: translateX(-50%); font-size: 26px; font-weight: 800; color: #ff8b8b; font-family: 'Arial', sans-serif; }
+        .howto-grid-tick-y { position: absolute; left: 373px; transform: translateY(-50%); font-size: 26px; font-weight: 800; color: #74b3f0; font-family: 'Arial', sans-serif; }
+
+        /* 목표 눈금(+5/-5)도 평소엔 각 축 색(X=빨강/Y=파랑)을 유지하고, 도착 시에만 진하게 반짝.
+           transform에 translateX/Y(-50%)를 함께 넣어야 눈금이 가운데 정렬 유지됨(빠지면 오른쪽/아래로 밀림) */
+        .howto-tick-target-pos { animation: tickHighlightPos 30s ease-in-out infinite; }
+        .howto-tick-target-neg { animation: tickHighlightNeg 30s ease-in-out infinite; }
+        @keyframes tickHighlightPos {
+            0%, 9.35% { color: #ff8b8b; transform: translateX(-50%) scale(1); }
+            9.57% { color: #ff4757; transform: translateX(-50%) scale(1.3); }
+            10.43% { color: #ff4757; transform: translateX(-50%) scale(1.15); }
+            48.91% { color: #ff4757; transform: translateX(-50%) scale(1.15); }
+            50% { color: #ff8b8b; transform: translateX(-50%) scale(1); }
+            100% { color: #ff8b8b; transform: translateX(-50%) scale(1); }
+        }
+        @keyframes tickHighlightNeg {
+            0%, 59.35% { color: #ff8b8b; transform: translateX(-50%) scale(1); }
+            59.57% { color: #ff4757; transform: translateX(-50%) scale(1.3); }
+            60.43% { color: #ff4757; transform: translateX(-50%) scale(1.15); }
+            98.91% { color: #ff4757; transform: translateX(-50%) scale(1.15); }
+            100% { color: #ff8b8b; transform: translateX(-50%) scale(1); }
+        }
+        .howto-tick-target-pos-y { animation: tickHighlightPosY 30s ease-in-out infinite; }
+        .howto-tick-target-neg-y { animation: tickHighlightNegY 30s ease-in-out infinite; }
+        @keyframes tickHighlightPosY {
+            0%, 30.22% { color: #74b3f0; transform: translateY(-50%) scale(1); }
+            30.43% { color: #0984e3; transform: translateY(-50%) scale(1.3); }
+            31.3% { color: #0984e3; transform: translateY(-50%) scale(1.15); }
+            48.91% { color: #0984e3; transform: translateY(-50%) scale(1.15); }
+            50% { color: #74b3f0; transform: translateY(-50%) scale(1); }
+            100% { color: #74b3f0; transform: translateY(-50%) scale(1); }
+        }
+        @keyframes tickHighlightNegY {
+            0%, 80.22% { color: #74b3f0; transform: translateY(-50%) scale(1); }
+            80.43% { color: #0984e3; transform: translateY(-50%) scale(1.3); }
+            81.3% { color: #0984e3; transform: translateY(-50%) scale(1.15); }
+            98.91% { color: #0984e3; transform: translateY(-50%) scale(1.15); }
+            100% { color: #74b3f0; transform: translateY(-50%) scale(1); }
+        }
+
+        /* 발이 X축(가로선) 위에 오도록 세로 기준점을 -50%가 아니라 -92%(발끝)로 이동 */
+        .howto-chick { position: absolute; font-size: 44px; transform: translate(-50%, -92%); animation: chickMove 30s ease-in-out infinite; z-index: 6; }
+        @keyframes chickMove {
+            0%      { left: 350px; top: 325px; }
+            9.57%   { left: 350px; top: 325px; animation-timing-function: steps(5, end); }
+            24.78%  { left: 625px; top: 325px; }
+            25.43%  { left: 625px; top: 325px; }
+            30.43%  { left: 625px; top: 325px; animation-timing-function: steps(5, end); }
+            45.65%  { left: 625px; top: 50px; }
+            48.91%  { left: 625px; top: 50px; }
+            50%     { left: 350px; top: 325px; }
+            59.57%  { left: 350px; top: 325px; animation-timing-function: steps(5, end); }
+            74.78%  { left: 75px;  top: 325px; }
+            75.43%  { left: 75px;  top: 325px; }
+            80.43%  { left: 75px;  top: 325px; animation-timing-function: steps(5, end); }
+            95.65%  { left: 75px;  top: 600px; }
+            98.91%  { left: 75px;  top: 600px; }
+            100%    { left: 350px; top: 325px; }
+        }
+
+        .howto-click-pulse { position: absolute; width: 34px; height: 34px; margin-left: -17px; margin-top: -17px; border: 5px solid #686de0; border-radius: 50%; opacity: 0; }
+        .howto-click-pos { left: 625px; top: 50px; animation: clickPulsePos 30s ease-in-out infinite; }
+        .howto-click-neg { left: 75px; top: 600px; animation: clickPulseNeg 30s ease-in-out infinite; }
+        @keyframes clickPulsePos { 0%, 45.43% { opacity: 0; transform: scale(0.3); } 46.3% { opacity: 1; transform: scale(1); } 46.96% { opacity: 0; transform: scale(2.2); } 100% { opacity: 0; } }
+        @keyframes clickPulseNeg { 0%, 95.43% { opacity: 0; transform: scale(0.3); } 96.3% { opacity: 1; transform: scale(1); } 96.96% { opacity: 0; transform: scale(2.2); } 100% { opacity: 0; } }
+
+        .howto-target-char { position: absolute; transform: translate(-50%, -75%); font-size: 58px; opacity: 0; }
+        .howto-flag-pos { left: 625px; top: 50px; animation: flagPopPos 30s ease-in-out infinite; }
+        .howto-flag-neg { left: 75px; top: 600px; animation: flagPopNeg 30s ease-in-out infinite; }
+        @keyframes flagPopPos {
+            0%, 45.43% { opacity: 0; transform: translate(-50%, -75%) scale(0); }
+            46.3% { opacity: 1; transform: translate(-50%, -75%) scale(1.3); }
+            46.96% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            48.91% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            50% { opacity: 0; transform: translate(-50%, -75%) scale(0.5); }
+            100% { opacity: 0; }
+        }
+        @keyframes flagPopNeg {
+            0%, 50%, 95.43% { opacity: 0; transform: translate(-50%, -75%) scale(0); }
+            96.3% { opacity: 1; transform: translate(-50%, -75%) scale(1.3); }
+            96.96% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            98.91% { opacity: 1; transform: translate(-50%, -75%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -75%) scale(0.5); }
+        }
+
+        .big-action-button {
+            background-color: #686de0; color: white; border: none; border-radius: 30px;
+            padding: 15px 30px; font-size: 30px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; transition: all 0.1s; width: 100%;
+        }
+        .big-action-button:active { transform: scale(0.97); }
+
+        .home-accent { background-color: #f9ca24; color: #2c3e50; font-size: 24px; padding: 12px 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="main-wrapper">
+        <div id="sidebar">
+            <h1>⌨️ 화살표 키<br>좌표 점프!</h1>
+
+            <div class="info-box">
+                <span class="label">🚩 목표 좌표</span>
+                <span id="mission-display">준비...</span>
+            </div>
+
+            <div class="info-box">
+                <span class="label">📍 지금 내 좌표</span>
+                <span id="current-pos">X: 0 , Y: 0</span>
+            </div>
+
+            <div class="info-box">
+                <span class="label">🐥 도착 성공</span>
+                <div><span id="score-display">0</span>번</div>
+            </div>
+
+            <div class="info-box">
+                <span class="label">⏰ 남은 시간</span>
+                <span id="time-display">60초</span>
+            </div>
+
+            <div class="sidebar-btn-group">
+                <button class="big-action-button home-accent" onclick="location.href='./'">🏠 처음으로</button>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <div id="game-area">
+                <div class="axis axis-x"></div>
+                <div class="axis axis-y"></div>
+
+                <div id="player">🐥</div>
+                <div id="target-marker" style="display:none;">🚩</div>
+
+                <div id="start-overlay" class="overlay">
+                    <h2>🐥 좌표 점프!</h2>
+                    <div class="rule-grid">
+                        <div class="rule-card rule-x">
+                            <div class="rule-key">←</div>
+                            <div class="rule-effect">X −1</div>
+                        </div>
+                        <div class="rule-card rule-x">
+                            <div class="rule-key">→</div>
+                            <div class="rule-effect">X +1</div>
+                        </div>
+                        <div class="rule-card rule-y">
+                            <div class="rule-key">↓</div>
+                            <div class="rule-effect">Y −1</div>
+                        </div>
+                        <div class="rule-card rule-y">
+                            <div class="rule-key">↑</div>
+                            <div class="rule-effect">Y +1</div>
+                        </div>
+                    </div>
+                    <p class="short-tip">🚩 숫자만 보고 찾아가기!</p>
+                    <button class="big-action-button" onclick="startGame()" style="width: auto; padding: 20px 60px; font-size: 40px; background-color: #ff4757;">▶ 시작하기!</button>
+                </div>
+
+                <div id="howto-overlay" class="overlay">
+                    <h2 class="howto-title-tl" style="position:absolute; top:20px; left:32px; font-size:32px; margin:0; color:#30336b; text-align:left;">🔎 X / Y좌표 읽는 법</h2>
+                    <div class="howto-caption howto-caption-pos">🎯 목표 (<span class="tx">5</span>, <span class="ty">5</span>)</div>
+                    <div class="howto-caption howto-caption-neg">🎯 목표 (<span class="tx">-5</span>, <span class="ty">-5</span>)</div>
+
+                   <div class="howto-step-caption howto-step-1">1️⃣첫 번째 숫자(X)만큼 왼쪽이나 오른쪽으로 가요!</div>
+                               <div class="howto-step-caption howto-step-2">2️⃣ 두 번째 숫자(Y)만큼 위나 아래로 움직여요!</div>
+
+                    <div class="howto-key-icon howto-key-x howto-key-x-pos">→</div>
+                    <div class="howto-key-icon howto-key-y howto-key-y-pos">↑</div>
+                    <div class="howto-key-icon howto-key-x howto-key-x-neg">←</div>
+                    <div class="howto-key-icon howto-key-y howto-key-y-neg">↓</div>
+
+                    <div class="howto-diagram">
+                        <div class="howto-grid-axis howto-grid-axis-x"></div>
+                        <div class="howto-grid-axis howto-grid-axis-y"></div>
+
+                        <div class="howto-grid-tick-x howto-tick-target-neg" style="left:75px;">-5</div>
+                        <div class="howto-grid-tick-x" style="left:130px;">-4</div>
+                        <div class="howto-grid-tick-x" style="left:185px;">-3</div>
+                        <div class="howto-grid-tick-x" style="left:240px;">-2</div>
+                        <div class="howto-grid-tick-x" style="left:295px;">-1</div>
+                        <div class="howto-grid-tick-x" style="left:405px;">1</div>
+                        <div class="howto-grid-tick-x" style="left:460px;">2</div>
+                        <div class="howto-grid-tick-x" style="left:515px;">3</div>
+                        <div class="howto-grid-tick-x" style="left:570px;">4</div>
+                        <div class="howto-grid-tick-x howto-tick-target-pos" style="left:625px;">5</div>
+
+                        <div class="howto-grid-tick-y howto-tick-target-pos-y" style="top:50px;">5</div>
+                        <div class="howto-grid-tick-y" style="top:105px;">4</div>
+                        <div class="howto-grid-tick-y" style="top:160px;">3</div>
+                        <div class="howto-grid-tick-y" style="top:215px;">2</div>
+                        <div class="howto-grid-tick-y" style="top:270px;">1</div>
+                        <div class="howto-grid-tick-y" style="top:380px;">-1</div>
+                        <div class="howto-grid-tick-y" style="top:435px;">-2</div>
+                        <div class="howto-grid-tick-y" style="top:490px;">-3</div>
+                        <div class="howto-grid-tick-y" style="top:545px;">-4</div>
+                        <div class="howto-grid-tick-y howto-tick-target-neg-y" style="top:600px;">-5</div>
+
+                        <div class="howto-click-pulse howto-click-pos"></div>
+                        <div class="howto-target-char howto-flag-pos">🚩</div>
+
+                        <div class="howto-click-pulse howto-click-neg"></div>
+                        <div class="howto-target-char howto-flag-neg">🚩</div>
+
+                        <div class="howto-chick">🐥</div>
+                    </div>
+                    <button class="big-action-button" onclick="startGame()" style="position:absolute; right:30px; bottom:22px; width: auto; padding: 14px 46px; font-size: 30px; background-color: #ff4757;">🚀 시작하기!</button>
+                </div>
+
+                <div id="result-overlay" class="overlay">
+                    <h2>탐험 종료!</h2>
+                    <p>목표 좌표 도착: <span id="final-score" style="color:#ff4757; font-weight:bold;">0</span> 번!</p>
+                    <p id="feedback-msg"></p>
+                    <button id="next-btn" class="big-action-button" onclick="location.href='xy.html'" style="width: auto; padding: 20px 60px; font-size: 40px; background-color: #2ed573; display:none;">➡️ 다음 단계로</button>
+                    <button id="retry-btn" class="big-action-button" onclick="startGame()" style="width: auto; padding: 20px 60px; font-size: 40px; background-color: #ff4757;">🔄 다시하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const missionDisplay = document.getElementById('mission-display');
+        const currentPosDisplay = document.getElementById('current-pos');
+        const scoreDisplay = document.getElementById('score-display');
+        const timeDisplay = document.getElementById('time-display');
+        const startOverlay = document.getElementById('start-overlay');
+        const resultOverlay = document.getElementById('result-overlay');
+        const howtoOverlay = document.getElementById('howto-overlay');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const player = document.getElementById('player');
+        const targetMarker = document.getElementById('target-marker');
+        const nextBtn = document.getElementById('next-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        const TARGET_SCORE = 8;
+
+        function showHowTo() {
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'flex';
+        }
+        function closeHowTo() {
+            howtoOverlay.style.display = 'none';
+            startOverlay.style.display = 'flex';
+        }
+
+        const CENTER_X = 550;
+        const CENTER_Y = 350;
+        const STEP = 50; // 좌표 1칸 = 50px
+
+        // 이동 가능 범위 (게임판 안쪽에서만 움직이도록)
+        const X_MIN = -10, X_MAX = 10;
+        const Y_MIN = -6, Y_MAX = 6;
+
+        let posX = 0, posY = 0;
+        let targetX = 0, targetY = 0;
+        let score = 0;
+        let timeLeft = 60;
+        let gameInterval;
+        let playing = false;
+        let targetHit = false; // ⭐️ 연타 방지: 도착한 뒤 다음 문제가 나올 때까지 이동을 무시
+
+        // 숫자는 축 바로 옆(원래 자리)에 그대로 둠
+        const LABEL_OFFSET = 8;
+        const CAR_LIFT = 25; // X축 위를 지나갈 때만 삐약이를 빨간선 위로 띄우는 높이(px)
+
+        function drawAxisLabels() {
+            for (let x = X_MIN; x <= X_MAX; x++) {
+                if (x === 0) continue;
+                let label = document.createElement('div');
+                label.className = 'axis-label';
+                label.textContent = x;
+                label.style.color = '#ff4757';
+                label.style.left = (x * STEP + CENTER_X) + 'px';
+                label.style.top = (CENTER_Y + LABEL_OFFSET) + 'px';
+                label.style.transform = 'translateX(-50%)';
+                gameArea.appendChild(label);
+            }
+            for (let y = Y_MIN; y <= Y_MAX; y++) {
+                if (y === 0) continue;
+                let label = document.createElement('div');
+                label.className = 'axis-label';
+                label.textContent = y;
+                label.style.color = '#1e90ff';
+                label.style.left = (CENTER_X + LABEL_OFFSET) + 'px';
+                label.style.top = (-y * STEP + CENTER_Y) + 'px';
+                label.style.transform = 'translateY(-50%)';
+                gameArea.appendChild(label);
+            }
+            let zero = document.createElement('div');
+            zero.className = 'axis-label';
+            zero.textContent = '0';
+            zero.style.color = '#2c3e50';
+            zero.style.left = (CENTER_X + LABEL_OFFSET) + 'px';
+            zero.style.top = (CENTER_Y + LABEL_OFFSET) + 'px';
+            gameArea.appendChild(zero);
+        }
+        drawAxisLabels();
+
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1046.50, now);
+                    osc.frequency.setValueAtTime(1318.51, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now); osc.stop(now + 0.5);
+                } else if (type === 'step') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                }
+            } catch (e) {}
+        }
+
+        // 항상 같은 만큼 띄워야 한 칸(50px)씩 딱딱 움직임 - Y값에 따라 뜨는 높이가
+        // 달라지면 그 지점에서만 칸 간격이 어긋나 보임. 그래서 모든 Y에 똑같이 적용해서
+        // 발바닥이 항상 자기 칸 선 위에 서 있는 것처럼 보이게 함 (Y=0일 때는 빨간선 위)
+        function screenTop(y) {
+            return (-y * STEP + CENTER_Y - CAR_LIFT) + 'px';
+        }
+
+        function updatePlayerVisual() {
+            player.style.left = (posX * STEP + CENTER_X) + 'px';
+            player.style.top = screenTop(posY);
+
+            currentPosDisplay.innerHTML =
+                'X: <span class="coord-x">' + posX + '</span> , Y: <span class="coord-y">' + posY + '</span>';
+        }
+
+        function placeTarget() {
+            // 화면에는 안 보이게 위치만 미리 잡아둠 (숫자만 보고 이동하게)
+            targetMarker.style.left = (targetX * STEP + CENTER_X) + 'px';
+            targetMarker.style.top = screenTop(targetY);
+            targetMarker.style.display = 'none';
+        }
+
+        function setNewTarget() {
+            targetHit = false; // ⭐️ 새 문제가 나오면 다시 움직일 수 있도록 잠금 해제
+            // 다음 문제를 낼 때마다 삐약이는 항상 원점(0,0)에서 다시 출발해요
+            posX = 0; posY = 0;
+            updatePlayerVisual();
+
+            do {
+                targetX = Math.floor(Math.random() * (X_MAX - X_MIN + 1)) + X_MIN;
+                targetY = Math.floor(Math.random() * (Y_MAX - Y_MIN + 1)) + Y_MIN;
+            } while (targetX === 0 && targetY === 0);
+
+            const xSign = targetX > 0 ? '+' + targetX : targetX;
+            const ySign = targetY > 0 ? '+' + targetY : targetY;
+            missionDisplay.innerHTML = 'X: <span class="coord-x">' + xSign + '</span> , Y: <span class="coord-y">' + ySign + '</span>';
+            placeTarget();
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 60;
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft + '초';
+
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'none';
+            resultOverlay.style.display = 'none';
+
+            setNewTarget();
+
+            playing = true;
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            timeLeft--;
+            timeDisplay.textContent = timeLeft + '초';
+            if (timeLeft <= 0) endGame();
+        }
+
+        function tryMove(dx, dy) {
+            if (!playing || targetHit) return; // ⭐️ 도착 직후 키를 연타해 왔다 갔다 하며 중복 득점하는 것 방지
+            const nx = Math.min(X_MAX, Math.max(X_MIN, posX + dx));
+            const ny = Math.min(Y_MAX, Math.max(Y_MIN, posY + dy));
+            if (nx === posX && ny === posY) return;
+
+            posX = nx; posY = ny;
+            updatePlayerVisual();
+            playSound('step');
+
+            if (posX === targetX && posY === targetY) {
+                targetHit = true; // ⭐️ 도착 즉시 잠금 (setNewTarget에서 다시 풀림)
+                playSound('success');
+                score++;
+                scoreDisplay.textContent = score;
+                targetMarker.style.display = 'flex'; // 도착한 순간에만 짠! 하고 깃발 등장
+                setTimeout(() => {
+                    targetMarker.style.display = 'none';
+                    setNewTarget();
+                }, 500);
+            }
+        }
+
+        function endGame() {
+            playing = false;
+            clearInterval(gameInterval);
+            document.getElementById('final-score').textContent = score;
+
+            if (score >= 8) {
+                feedbackMsg.innerHTML = "최고예요! 화살표 키와 좌표를<br>완벽하게 연결해서 이해했어요! 🚀";
+                feedbackMsg.style.color = "#ff4757";
+            } else if (score >= 4) {
+                feedbackMsg.innerHTML = "참 잘했어요!<br>+, - 방향을 잘 찾아냈어요! 👏";
+                feedbackMsg.style.color = "#f0932b";
+            } else {
+                feedbackMsg.innerHTML = "좋아요!<br>→ ← ↑ ↓ 키가 X, Y를 어떻게<br>바꾸는지 조금 더 연습해봐요! 😉";
+                feedbackMsg.style.color = "#1e90ff";
+            }
+
+            if (score >= TARGET_SCORE) {
+                nextBtn.style.display = 'block';
+                retryBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+            }
+
+            resultOverlay.style.display = 'flex';
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                event.preventDefault();
+            }
+            if (!playing) return;
+            if (event.repeat) return; // 키를 꾹 눌러서 자동으로 계속 이동하는 것 방지 (한 번 누를 때마다 1칸만)
+
+            switch (event.key) {
+                case 'ArrowRight': tryMove(1, 0); break;
+                case 'ArrowLeft': tryMove(-1, 0); break;
+                case 'ArrowUp': tryMove(0, 1); break;
+                case 'ArrowDown': tryMove(0, -1); break;
+            }
+        });
+
+        updatePlayerVisual();
+    </script>
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <a class="jj-badge" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>제작 : 잼잼클래쓰 ❤️ | <span>유튜브 채널 바로가기</span></a>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <title>키보드 연습 메뉴</title>
+    <style>
+body {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            color: #5b3a8a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'ONEMobilePOP', sans-serif;
+            position: relative;
+        }
+
+        /* 🏠 왼쪽 상단 처음으로 버튼 */
+        .home-btn {
+            background-color: #FFF;
+            color: #5b3a8a;
+            border-color: #5b3a8a;
+            box-shadow: 0 6px 0 #d8c8f5;
+        }
+
+        /* 큰 제목 섹션 */
+        .header-section { text-align: center; margin-top: 80px; margin-bottom: 20px; }
+        .main-title { font-size: 70px; color: #5b3a8a; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .sub-desc { font-size: 22px; background: white; padding: 12px 25px; border-radius: 40px; color: #4a3f95; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        /* 카드가 항상 한 줄로만 보이도록: 줄바꿈 금지 + 넘치면 가로 스크롤 */
+        .container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            justify-content: center;
+            max-width: 1400px;
+            padding: 10px;
+        }
+
+        .card {
+            flex: 0 0 auto;
+            width: 210px;
+            height: 260px;
+            background: white;
+            border-radius: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(91, 58, 138, 0.15);
+            text-decoration: none;
+            transition: 0.3s;
+            position: relative;
+            border: 3px solid #e5deff;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            background-color: #faf8ff;
+            box-shadow: 0 20px 40px rgba(91, 58, 138, 0.3);
+            border-color: #5b3a8a;
+        }
+
+        /* 카드 상단 이름표(태그) 글씨 및 여백 축소 */
+        .badge {
+            position: absolute;
+            top: 20px;
+            background-color: #f3edff;
+            color: #5b3a8a;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .icon { font-size: 70px; margin-top: 20px; margin-bottom: 10px; }
+        .title {
+            font-size: 22px;
+            color: #5b3a8a;
+            font-family: 'ONEMobilePOP', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+
+    <!-- 큰 제목 섹션 -->
+    <div class="header-section">
+        <div class="main-title">⌨️ 키보드 놀이터</div>
+        <div class="sub-desc">어떤 키보드 마법을 연습해 볼까요? 원하는 놀이를 골라보세요!</div>
+    </div>
+
+    <div class="container">
+        <!-- 방금 만든 자유 연습용 키보드 (맨 처음 위치) -->
+        <a href="key_macaron.html" class="card">
+            <div class="badge">자유 놀이</div>
+            <div class="icon">👆</div> <!-- 피아노 건반에서 손가락 누르기 아이콘으로 변경 -->
+            <div class="title">마카롱 키보드 </div>
+        </a>
+
+        <!-- 타자 연습 -->
+        <a href="key_macaron_typing.html" class="card">
+            <div class="badge">3분 챌린지</div>
+            <div class="icon">⏱️</div>
+            <div class="title">타자 연습</div>
+        </a>
+
+        <!-- 중요키 연습 -->
+        <a href="key_easycontrol.html" class="card">
+            <div class="badge">기초 다지기</div>
+            <div class="icon">✨</div>
+            <div class="title">중요키 연습</div>
+        </a>
+        
+        <!-- 숫자판 연습 -->
+        <a href="key_num.html" class="card">
+            <div class="badge">숫자 정복</div>
+            <div class="icon">🔢</div>
+            <div class="title">숫자판 연습</div>
+        </a>
+        
+        <!-- 컨트롤키 연습 -->
+        <a href="key_control.html" class="card">
+            <div class="badge">고수 도전</div>
+            <div class="icon">🎮</div>
+            <div class="title">컨트롤키 연습</div>
+        </a>
+
+        <!-- 특수키 연습 -->
+        <a href="key_special.html" class="card">
+            <div class="badge">마스터 과정</div>
+            <div class="icon">🔮</div>
+            <div class="title">특수키 연습</div>
+        </a>
+    </div>
+
+    <footer class="footer" style="color: #5b3a8a;"><span class="jj-footer">제작 : 잼잼클래쓰 ❤️ <a class="jj-yt" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="22" height="16" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#fff"/><path d="M11 5.5v9l7.5-4.5z" fill="#FF0033"/></svg>유튜브 채널 바로가기</a></span></footer>
+
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

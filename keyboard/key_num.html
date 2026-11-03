@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <title>숫자 키패드 마스터</title>
+    <style>
+        @import url('https://webfontworld.github.io/baemin/BMJUA.css');
+        
+body { 
+            background-color: #e9e1fb; display: flex; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; font-family: 'BMJUA', sans-serif !important; 
+        }
+
+        .main-wrapper { display: flex; gap: 60px; align-items: center; }
+
+        .mission-box { 
+            background: white; padding: 30px 40px; border-radius: 40px; border: 6px solid #e1d5ff; 
+            width: 720px; min-height: 520px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: 0 10px 30px rgba(103,58,183,0.05); transition: all 0.3s ease;
+        }
+        #mission-title { font-size: 45px; color: #673ab7; font-weight: bold; margin-bottom: 10px; }
+        
+        #mission-target-num { font-size: 130px; color: #d81b60; font-weight: bold; margin: 20px 0; display: flex; justify-content: center; gap: 10px; }
+        .char-span { color: #cccccc; transition: color 0.2s; }
+        .char-span.completed { color: #d81b60; }
+
+        #next-key { font-size: 28px; color: #7e57c2; margin-bottom: 10px; font-weight: bold; }
+        #mission-desc { font-size: 24px; color: #424242; line-height: 1.4; font-weight: bold; margin-bottom: 8px; }
+        
+        .check-box { 
+            font-size: 32px; color: #673ab7; margin-top: 20px; font-weight: bold; 
+            background-color: #f3edff; padding: 20px 30px; border-radius: 30px; line-height: 1.4;
+        }
+
+        .numpad-area { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        
+        .led-box { 
+            display: flex; align-items: center; gap: 15px; font-weight: bold; color: #7e57c2; 
+            font-size: 28px; background: #fff; padding: 15px 30px; border-radius: 30px; border: 3px dashed #e1d5ff;
+        }
+        .led-light { width: 24px; height: 24px; background: #ccc; border-radius: 50%; border: 4px solid #fff; }
+        .led-light.on { background: #4caf50; box-shadow: 0 0 20px #4caf50; }
+
+        .numpad-container { 
+            display: grid; grid-template-columns: repeat(4, 85px); grid-template-rows: repeat(5, 85px); gap: 15px;
+            background: #fffaf2; padding: 30px; border-radius: 30px; border: 6px solid #e2d4c9;
+        }
+        .key { display: flex; align-items: center; justify-content: center; background: #f8bbd0; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 32px; box-shadow: 0 5px 0 #e0a3b8; }
+        .key.tall { grid-row: span 2; }
+        #key-0 { grid-column: span 2; }
+        .key.active { background: #9575cd !important; color: white; transform: translateY(5px); box-shadow: none !important; }
+        .key.guide { border: 6px solid #9575cd; box-shadow: 0 0 20px #9575cd; }
+        .key.error { background: #ff5252 !important; color: white; }
+
+        #popup-msg { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(149, 117, 205, 0.95); z-index: 9999; justify-content: center; align-items: center;
+        }
+        .popup-content {
+            background: white; color: #673ab7; padding: 60px; border-radius: 80px;
+            font-size: 60px; text-align: center; border: 15px solid #e1d5ff; width: 800px;
+            font-family: 'ONEMobilePOP', sans-serif !important; font-weight: normal;
+        }
+        
+        /* ✨ 커스텀 경고 팝업 스타일 ✨ */
+        #alert-popup {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); z-index: 10000; justify-content: center; align-items: center;
+        }
+        .alert-content {
+            background: white; padding: 60px 80px; border-radius: 50px; border: 8px solid #ff5252;
+            text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3); max-width: 800px;
+            animation: bounceDown 0.5s ease-out forwards;
+        }
+        .alert-text {
+            font-size: 40px; color: #d81b60; font-weight: bold; line-height: 1.5; 
+            font-family: 'ONEMobilePOP', sans-serif !important; margin: 20px 0 40px 0;
+        }
+
+        .btn-group { margin-top: 30px; display: flex; gap: 20px; justify-content: center; }
+        
+        .btn { 
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px; 
+            padding: 15px 40px; border-radius: 30px; cursor: pointer; font-size: 30px; 
+            border: none; background: #673ab7; color: white; font-family: 'ONEMobilePOP', sans-serif !important; 
+            transition: all 0.2s; position: relative; z-index: 999999; pointer-events: auto;
+            box-shadow: 0 8px 0 #512da8;
+        }
+        .btn:active { transform: translateY(5px); box-shadow: none !important; }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+
+        .btn-alert {
+            background: #ff5252; box-shadow: 0 8px 0 #c62828;
+        }
+
+        .home-btn {
+            background-color: #FFF;
+            color: #e91e63;
+            border-color: #e91e63;
+            box-shadow: 0 6px 0 #f8bbd0;
+        }
+
+        @keyframes bounceDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(15px); }
+        }
+
+        /* ✨ 준비 단계: 숫자판만 크게 ✨ */
+        .css-kb {
+            background: #fdfaf6; border: 6px solid #eaddd3; border-radius: 28px; padding: 22px 26px 26px;
+            display: inline-block; box-shadow: 0 10px 25px rgba(103,58,183,0.1);
+            user-select: none; font-family: sans-serif; pointer-events: none;
+        }
+        .css-led-row { display: flex; justify-content: space-around; margin-bottom: 18px; }
+        .css-led-box { display: flex; flex-direction: column; align-items: center; font-size: 18px; color: #999; font-weight: bold; gap: 6px; }
+        .css-led-box.num { color: #2e7d32; font-size: 22px; }
+        .css-led { width: 22px; height: 22px; background: #d0c8c0; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .css-led.on { width: 30px; height: 30px; background: #00e000; box-shadow: 0 0 22px #00e000; }
+
+        @keyframes glowNum {
+            0%, 100% { background: #ffcdd2; box-shadow: 0 5px 0 #e6b3b8; }
+            50% { background: #ff4081; box-shadow: 0 0 30px #ff4081; color: white; transform: scale(1.1); }
+        }
+        .css-key.num-highlight { animation: glowNum 1.2s infinite ease-in-out; position: relative; }
+
+        .css-kb-numpad { display: grid; grid-template-columns: repeat(4, 66px); grid-template-rows: repeat(5, 66px); gap: 9px; }
+        .css-key {
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; color: #555;
+        }
+        .css-key.pink { background: #ffcdd2; box-shadow: 0 5px 0 #e6b3b8; }
+        .css-key.tall { grid-row: span 2; }
+        .css-key.wide { grid-column: span 2; }
+
+        .mission-box.prep, .mission-box.prep * { font-family: 'ONEMobilePOP', sans-serif !important; font-weight: normal; }
+        .mission-box.prep { border-color: #b39ddb; box-shadow: 0 14px 40px rgba(69,39,160,0.18); }
+        .mission-box.prep #mission-title { color: #4527a0; }
+        .prep-layout { display: flex; align-items: center; gap: 50px; margin: 20px 0 10px; }
+        .prep-cards { display: flex; flex-direction: column; gap: 22px; width: 560px; }
+        .prep-card {
+            text-align: left; border-radius: 28px; padding: 22px 30px; border: 5px solid;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.06);
+        }
+        .prep-card .q { font-size: 34px; color: #212121; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+        .prep-card .a { font-size: 30px; display: flex; align-items: center; gap: 10px; }
+        .prep-card.on { background: #fff; border-color: #43a047; border-width: 6px; }
+        .prep-card.on .a { color: #1b5e20; }
+        .prep-card.off { background: #fff; border-color: #ec407a; border-width: 6px; }
+        .prep-card.off .a { color: #ad1457; }
+        .dot { display: inline-block; width: 30px; height: 30px; border-radius: 50%; flex: none; }
+        .dot.green { background: #00e000; box-shadow: 0 0 14px #00e000; }
+        .dot.gray { background: #bdbdbd; }
+        .keycap {
+            display: inline-block; background: #ff4081; color: white; border-radius: 12px;
+            padding: 2px 16px; box-shadow: 0 4px 0 #c2185b; font-size: 30px;
+        }
+        .green-word { color: #1b8a2a; }
+
+        .prep-check {
+            cursor: pointer; font-size: 32px; color: #424242; display: flex; align-items: center; justify-content: center; gap: 18px;
+            margin: 10px 0 22px; background: #fff8e1; padding: 18px 36px; border-radius: 24px; border: 5px dashed #ffb300;
+            transition: all 0.25s; user-select: none;
+        }
+        .prep-check input { width: 40px; height: 40px; cursor: pointer; accent-color: #43a047; }
+        .prep-check:hover { border-color: #f48fb1; color: #d81b60; }
+        .prep-check.checked { background: #e8f5e9; border: 5px solid #43a047; color: #1b5e20; transform: scale(1.04); }
+
+        #start-btn { font-size: 36px; padding: 18px 60px; }
+        #start-btn.locked { background: #bdbdbd; color: #fff; box-shadow: 0 8px 0 #9e9e9e; cursor: not-allowed; }
+        #start-btn.ready { background: #43a047; box-shadow: 0 8px 0 #2e7d32; animation: readyPulse 1s infinite ease-in-out; }
+        @keyframes readyPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="home-btn" onclick="location.href='./'">🏠 처음으로</button>
+
+    <div class="main-wrapper">
+        <div class="mission-box" id="mission-box">
+            <!-- 자바스크립트로 동적 렌더링 -->
+        </div>
+
+        <div class="numpad-area" id="numpad-area">
+            <div class="led-box"><div id="led-light" class="led-light"></div> 💡 화면 불빛 확인!</div>
+            <div class="numpad-container">
+                <div class="key" id="key-NumLock">Num</div>
+                <div class="key" id="key-/">/</div><div class="key" id="key-*">*</div><div class="key" id="key--">-</div>
+                <div class="key" id="key-7">7</div><div class="key" id="key-8">8</div><div class="key" id="key-9">9</div>
+                <div class="key tall" id="key-+">+</div>
+                <div class="key" id="key-4">4</div><div class="key" id="key-5">5</div><div class="key" id="key-6">6</div>
+                <div class="key" id="key-1">1</div><div class="key" id="key-2">2</div><div class="key" id="key-3">3</div>
+                <div class="key tall" id="key-Enter">Ent</div>
+                <div class="key" id="key-0" style="grid-column: span 2;">0</div><div class="key" id="key-.">.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 첫 화면 마카롱 키보드 디자인 템플릿 -->
+    <template id="macaron-template">
+        <div class="css-kb">
+            <div class="css-led-row">
+                <div class="css-led-box num"><div class="css-led on"></div><span>Num</span></div>
+                <div class="css-led-box"><div class="css-led"></div><span>Caps</span></div>
+                <div class="css-led-box"><div class="css-led"></div><span>Scroll</span></div>
+            </div>
+            <div class="css-kb-numpad">
+                <div class="css-key pink num-highlight">Num</div><div class="css-key pink">/</div><div class="css-key pink">*</div><div class="css-key pink">-</div>
+                <div class="css-key pink">7</div><div class="css-key pink">8</div><div class="css-key pink">9</div><div class="css-key pink tall">+</div>
+                <div class="css-key pink">4</div><div class="css-key pink">5</div><div class="css-key pink">6</div>
+                <div class="css-key pink">1</div><div class="css-key pink">2</div><div class="css-key pink">3</div><div class="css-key pink tall">Ent</div>
+                <div class="css-key pink wide">0</div><div class="css-key pink">.</div>
+            </div>
+        </div>
+    </template>
+
+    <!-- 정답 및 전환 팝업 -->
+    <div id="popup-msg"><div class="popup-content" id="popup-text"></div></div>
+
+    <!-- ✨ 체크박스 미확인 시 뜨는 커스텀 경고 팝업 ✨ -->
+    <div id="alert-popup">
+        <div class="alert-content">
+            <div style="font-size: 80px; margin-bottom: 10px;">💡</div>
+            <div class="alert-text">
+                앗!<br>먼저 초록불이 켜졌는지 확인하고<br>네모 박스에 체크(✔)를 해주세요!
+            </div>
+            <button class="btn btn-alert" onclick="document.getElementById('alert-popup').style.display='none'">네, 확인할게요!</button>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            { title: "✨ 준비 단계 (초록불 확인)", desc: "", targets: ["NumLock"], displayNum: [""], popup: "🎉 준비 완료!" },
+            { title: "🔢 숫자 연습", desc: "", targets: ["0","1","2","3","4","5","6","7","8","9"], displayNum: ["0","1","2","3","4","5","6","7","8","9"], popup: "🚀 시작! 🚀" },
+            { title: "🎯 소수 연습", desc: "", targets: ["0",".","1", "0",".","2", "0",".","3", "0",".","4", "0",".","5", "0",".","6", "0",".","7", "0",".","8", "0",".","9"], displayNum: ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"], popup: "⭐ 소수 연습 시작! ⭐" },
+            { title: "➖ 마이너스 연습", desc: "", targets: ["-","1", "-","2", "-","3", "-","4", "-","5", "-","6", "-","7", "-","8", "-","9"], displayNum: ["-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9"], popup: "🔥 마이너스(빼기) 연습! 🔥" }
+        ];
+
+        let stageIdx = 0, stepIdx = 0;
+        let isWaiting = false;
+
+        function showPopup(text, isFinal = false) {
+            const p = document.getElementById('popup-msg');
+            const t = document.getElementById('popup-text');
+            if (isFinal) {
+                t.innerHTML = text + '<div class="btn-group"><button class="btn" onclick="location.reload()">🔄 다시하기</button><button class="btn" onclick="location.href=\'./\'">🏠 처음으로</button></div>';
+            } else {
+                t.textContent = text;
+                setTimeout(() => { p.style.display = 'none'; }, 1000);
+            }
+            p.style.display = 'flex';
+        }
+
+        window.startNextStage = function() {
+            stageIdx++; 
+            stepIdx = 0;
+            showPopup(stages[stageIdx].popup);
+            updateUI();
+        };
+
+        // ✨ 체크박스 확인 함수 수정 (기본 alert 대신 커스텀 팝업 띄우기) ✨
+        window.checkAndStart = function() {
+            const checkbox = document.getElementById('check-light');
+            if (checkbox && checkbox.checked) {
+                startNextStage();
+            } else {
+                document.getElementById('alert-popup').style.display = 'flex';
+            }
+        };
+
+        // ✨ 체크하면 시작하기 버튼이 잠금 해제되며 초록색으로 바뀜 ✨
+        window.onLightCheck = function(cb) {
+            const btn = document.getElementById('start-btn');
+            document.getElementById('check-label').classList.toggle('checked', cb.checked);
+            btn.classList.toggle('locked', !cb.checked);
+            btn.classList.toggle('ready', cb.checked);
+            btn.textContent = cb.checked ? '🚀 시작하기' : '🔒 시작하기';
+        };
+
+        function updateUI(showCompletedIdx) {
+            const missionBox = document.getElementById('mission-box');
+            const numpadArea = document.getElementById('numpad-area');
+            let displayVal = "";
+            let nextKeyText = "";
+            let statusText = "💖 열심히 해봐요!";
+            
+            if (stageIdx > 0) {
+                if (showCompletedIdx !== undefined) {
+                    let fullStr = stages[stageIdx].displayNum[showCompletedIdx];
+                    displayVal = fullStr.split('').map(ch => `<span class="char-span completed">${ch}</span>`).join('');
+                    statusText = "🎉 정답이에요!";
+                } else {
+                    let targetKey = stages[stageIdx].targets[stepIdx];
+                    let currentItemIdx = 0;
+                    
+                    if (stageIdx === 1) {
+                        currentItemIdx = stepIdx;
+                        let fullStr = stages[stageIdx].displayNum[currentItemIdx];
+                        displayVal = `<span class="char-span">${fullStr}</span>`;
+                    } else if (stageIdx === 2) {
+                        currentItemIdx = Math.floor(stepIdx / 3);
+                        let fullStr = stages[stageIdx].displayNum[currentItemIdx];
+                        let typedCount = stepIdx % 3;
+                        
+                        displayVal = "";
+                        for(let i=0; i<fullStr.length; i++) {
+                            let colorClass = (i < typedCount) ? "char-span completed" : "char-span";
+                            displayVal += `<span class="${colorClass}">${fullStr[i]}</span>`;
+                        }
+                    } else if (stageIdx === 3) {
+                        currentItemIdx = Math.floor(stepIdx / 2);
+                        let fullStr = stages[stageIdx].displayNum[currentItemIdx];
+                        let typedCount = stepIdx % 2;
+                        
+                        displayVal = "";
+                        for(let i=0; i<fullStr.length; i++) {
+                            let colorClass = (i < typedCount) ? "char-span completed" : "char-span";
+                            displayVal += `<span class="${colorClass}">${fullStr[i]}</span>`;
+                        }
+                    }
+                    
+                    nextKeyText = "";
+                }
+            }
+
+            if (stageIdx === 0) {
+                numpadArea.style.display = 'none';
+                missionBox.classList.add('prep');
+                missionBox.style.width = '1250px';
+                missionBox.style.minHeight = '0';
+
+                missionBox.innerHTML = `
+                    <div class="prep-layout">
+                        ${document.getElementById('macaron-template').innerHTML}
+
+                        <div class="prep-cards">
+                            <div id="mission-title" style="margin: 0; font-size: 48px; text-align: left;">${stages[stageIdx].title}</div>
+                            <div style="font-size: 36px; color: #4527a0; text-align: left;">👀 내 키보드 숫자판 위를 보세요!</div>
+                            <div class="prep-card on">
+                                <div class="q"><span class="dot green"></span> <span><span class="green-word">초록불</span>이 켜져 있어요</span></div>
+                                <div class="a">👉 아래 네모에 체크 ✔</div>
+                            </div>
+                            <div class="prep-card off">
+                                <div class="q"><span class="dot gray"></span> 불이 꺼져 있어요</div>
+                                <div class="a">👉 <span class="keycap">Num</span> 키를 눌러 켜요!</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="prep-check" id="check-label">
+                        <input type="checkbox" id="check-light" onchange="onLightCheck(this)">
+                        <span>네! <span class="green-word">초록불</span>이 켜진 것을 확인했어요!</span>
+                    </label>
+
+                    <button class="btn locked" id="start-btn" onclick="checkAndStart()">🔒 시작하기</button>
+                `;
+            } else {
+                numpadArea.style.display = 'flex';
+                missionBox.classList.remove('prep');
+                missionBox.style.width = '720px';
+                missionBox.style.minHeight = '520px';
+                
+                missionBox.innerHTML = `
+                    <div id="mission-title">${stages[stageIdx].title}</div>
+                    ${displayVal ? `<div id="mission-target-num">${displayVal}</div>` : ""}
+                    ${nextKeyText}
+                    <div id="mission-desc">${stages[stageIdx].desc}</div>
+                    <div id="check-status" class="check-box">${statusText}</div>
+                `;
+            }
+            
+            document.querySelectorAll('.key').forEach(k => k.classList.remove('guide', 'error'));
+            if (stageIdx > 0 && !isWaiting) {
+                let currentTarget = stages[stageIdx].targets[stepIdx];
+                document.getElementById('key-' + currentTarget)?.classList.add('guide');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // 알림 팝업이 떠있을 때는 다른 키보드 입력을 무시하도록 추가
+            if (document.getElementById('alert-popup').style.display === 'flex') {
+                if(e.key === 'Enter' || e.key === 'Escape') {
+                    document.getElementById('alert-popup').style.display = 'none';
+                }
+                return;
+            }
+
+            const isNumLocked = e.getModifierState("NumLock");
+            const ledLight = document.getElementById('led-light');
+            if(ledLight) {
+                ledLight.className = isNumLocked ? 'led-light on' : 'led-light';
+            }
+
+            if (stageIdx === 0 || isWaiting) {
+                return;
+            }
+
+            if (stageIdx > 0) {
+                let pressedKey = e.key;
+                let targetKey = stages[stageIdx].targets[stepIdx];
+
+                if (pressedKey === targetKey) {
+                    document.getElementById('key-' + targetKey)?.classList.add('active');
+                    setTimeout(() => document.getElementById('key-' + targetKey)?.classList.remove('active'), 200);
+                    
+                    let isItemFinished = false;
+                    let isStageFinished = false;
+
+                    if (stageIdx === 1) {
+                        let completedIdx = stepIdx;
+                        stepIdx++;
+                        isWaiting = true;
+                        updateUI(completedIdx);
+                        setTimeout(() => {
+                            isWaiting = false;
+                            if (stepIdx >= stages[stageIdx].targets.length) {
+                                stageIdx++;
+                                stepIdx = 0;
+                                if (stageIdx < stages.length) {
+                                    showPopup(stages[stageIdx].popup);
+                                    updateUI();
+                                } else {
+                                    showPopup("👑 마스터 성공! 👑<br>정말 멋져요!", true);
+                                }
+                            } else {
+                                updateUI();
+                            }
+                        }, 500);
+                        return;
+                    } else if (stageIdx === 2) {
+                        let subStep = stepIdx % 3;
+                        stepIdx++;
+                        if (subStep === 2) isItemFinished = true;
+                        if (stepIdx >= stages[stageIdx].targets.length) isStageFinished = true;
+                    } else if (stageIdx === 3) {
+                        let subStep = stepIdx % 2;
+                        stepIdx++;
+                        if (subStep === 1) isItemFinished = true;
+                        if (stepIdx >= stages[stageIdx].targets.length) isStageFinished = true;
+                    }
+
+                    let itemLen = (stageIdx === 2) ? 3 : 2;
+                    let completedItemIdx = Math.floor((stepIdx - 1) / itemLen);
+
+                    if (isStageFinished) {
+                        isWaiting = true;
+                        updateUI(completedItemIdx);
+                        setTimeout(() => {
+                            stageIdx++; stepIdx = 0;
+                            isWaiting = false;
+                            if (stageIdx < stages.length) { showPopup(stages[stageIdx].popup); updateUI(); } 
+                            else { showPopup("👑 마스터 성공! 👑<br>정말 멋져요!", true); }
+                        }, 500); 
+                    } else if (isItemFinished) {
+                        isWaiting = true;
+                        updateUI(completedItemIdx); 
+                        setTimeout(() => {
+                            isWaiting = false;
+                            updateUI(); 
+                        }, 500);
+                    } else {
+                        updateUI();
+                    }
+                } else {
+                    const errorKey = document.getElementById('key-' + pressedKey);
+                    if (errorKey) {
+                        errorKey.classList.add('error');
+                        setTimeout(() => errorKey.classList.remove('error'), 300);
+                    }
+                }
+            }
+        });
+        
+        updateUI();
+    </script>
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <a class="jj-badge" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>제작 : 잼잼클래쓰 ❤️ | <span>유튜브 채널 바로가기</span></a>
+</body>
+</html>

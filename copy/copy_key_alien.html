@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>말랑말랑 외계인 복사하기 게임!</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        /* ⚠️ 모든 요소의 글꼴을 프리텐다드(두꺼운체)로 통일 */
+        body, button, h1, h2, h3, p, div, span, a, b {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 700;
+        }
+
+        body {
+            background-color: #111625;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none; /* 글자 드래그 방지 */
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* 🏠 왼쪽 상단 처음으로 버튼 */
+        .home-btn {
+            background-color: #FFF;
+            color: #00f2fe;
+            border-color: #00f2fe;
+            box-shadow: 0 6px 0 #008c96;
+        }
+        .home-btn:hover { background-color: #E0FFFF; }
+        .home-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #008c96; }
+
+        h1 { color: #00f2fe; margin-bottom: 5px; font-size: 44px; text-shadow: 2px 2px 0px #000, 4px 4px 10px rgba(0, 242, 254, 0.3); }
+        .info { font-size: 24px; margin-bottom: 25px; color: #e0e0e0; font-weight: bold;}
+        
+        /* 전체 레이아웃 */
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* 왼쪽: 복사 존 */
+        .copy-zone {
+            background: #16213e;
+            border: 5px dashed #4ecc71;
+            border-radius: 35px;
+            padding: 20px;
+            width: 360px;
+            height: 460px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s;
+        }
+        .copy-zone h3 {
+            font-size: 30px;
+            line-height: 1.4;
+            margin: 0 0 10px 0;
+            color: #4ecc71;
+        }
+        .key-badge {
+            background-color: #222;
+            padding: 2px 10px;
+            border-radius: 8px;
+            border: 2px solid #fff;
+            color: #ffde7d;
+        }
+
+        /* 👽 원본 외계인 크기 및 애니메이션 */
+        .alien-source {
+            font-size: 130px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 30px;
+            transition: all 0.2s;
+            outline: none;
+            animation: floatAlien 2.5s ease-in-out infinite;
+        }
+        .alien-source.selected {
+            background-color: rgba(78, 204, 113, 0.2);
+            box-shadow: 0 0 35px #4ecc71;
+            animation: none;
+            transform: scale(1.1);
+        }
+
+        /* 복사 대기 상태의 안내 문구 (손가락이 위쪽 외계인을 향함) */
+        #copy-hint {
+            font-size: 30px;
+            color: #BA9B8A;
+            height: 65px;
+            line-height: 65px;
+            margin-top: 15px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 90%;
+            border-radius: 20px;
+            background: transparent;
+        }
+
+        /* 복사 완료 시 눈에 확 띄는 마법 배너 */
+        #copy-hint.complete {
+            background-color: #4ecc71; 
+            color: #FFF;
+            font-size: 36px; 
+            font-weight: bold;
+            box-shadow: 0 12px 25px rgba(78, 204, 113, 0.5);
+            animation: popBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border: 3px solid #FFF;
+        }
+
+        /* 오른쪽: 붙여넣기 존 (우주선) */
+        .paste-zone {
+            position: relative;
+            background: #0f3460;
+            outline: 6px solid #00f2fe; 
+            border-radius: 35px;
+            width: 600px;
+            height: 460px;
+            overflow: hidden;
+            cursor: crosshair;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s;
+        }
+        .paste-zone h3 {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            font-size: 32px;
+            color: #00f2fe;
+            margin: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .ufo-bg {
+            font-size: 240px;
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.12;
+            pointer-events: none;
+            animation: floatBag 3s ease-in-out infinite;
+        }
+        
+        /* 🎯 조준점 */
+        .target-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px dashed #ff416c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            pointer-events: none;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .target-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #ff416c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 👽 붙여넣어지는 외계인 */
+        .pasted-alien {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 65px;
+            transform: translate(-50%, -50%);
+            animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        /* 하단 알림창 */
+        #status-message {
+            margin-top: 30px;
+            font-size: 40px;
+            color: #fff; 
+            height: 60px;
+            transition: all 0.1s;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* 🔥 강조용 텍스트 (단축키 및 클릭 유도) */
+        .highlight-text {
+            color: #ffde7d;
+            font-size: 46px;
+            font-weight: 800;
+            display: inline-block;
+        }
+
+        /* 점수판 */
+        #score-board {
+            font-size: 38px;
+            margin-top: 15px;
+            color: #00f2fe;
+            font-weight: bold;
+        }
+
+        /* 🎉 대성공 팝업 화면 */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .success-content {
+            background: #222546;
+            border: 8px solid #ffde7d;
+            border-radius: 40px;
+            padding: 50px 70px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(255, 222, 125, 0.3);
+            animation: bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .success-content h2 {
+            font-size: 75px;
+            color: #ffde7d;
+            margin: 0 0 10px 0;
+        }
+        .success-content p {
+            font-size: 36px;
+            color: #fff;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .btn-box { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        .restart-btn, .home-popup-btn {
+            width: 250px; height: 80px; font-size: 32px; font-weight: bold;
+            border-radius: 20px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+            transition: all 0.1s;
+        }
+        .restart-btn { background: #4ecc71; color: white; box-shadow: 0 8px #27ae60; }
+        .restart-btn:hover { background: #5edb81; }
+        .restart-btn:active { transform: translateY(6px); box-shadow: 0 2px #27ae60; }
+
+        .home-popup-btn { background: #00f2fe; color: #111625; box-shadow: 0 8px #008c96; }
+        .home-popup-btn:hover { background: #33f5ff; }
+        .home-popup-btn:active { transform: translateY(6px); box-shadow: 0 2px #008c96; }
+
+        /* ====== 시각적 제한 및 강조 효과 ====== */
+        .disabled-zone {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(40%);
+        }
+
+        @keyframes pulseBorderLeft {
+            0% { border-color: #4ecc71; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+            50% { border-color: #ffde7d; box-shadow: 0 0 35px rgba(255, 222, 125, 0.9); }
+            100% { border-color: #4ecc71; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+        }
+        .active-pulse-left {
+            animation: pulseBorderLeft 1.2s infinite !important;
+            border-color: #ffde7d !important;
+        }
+
+        @keyframes pulseBorderRight {
+            0% { outline-color: #00f2fe; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+            50% { outline-color: #ffde7d; box-shadow: 0 0 40px rgba(255, 222, 125, 0.9); }
+            100% { outline-color: #00f2fe; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4); }
+        }
+        .active-pulse-right {
+            animation: pulseBorderRight 1.2s infinite !important;
+            outline: 6px solid #ffde7d !important;
+        }
+
+        /* 애니메이션 정의 */
+        @keyframes floatAlien {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        @keyframes floatBag {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            50% { transform: translate(-50%, -52%) scale(1.03) rotate(-2deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+        @keyframes pop {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            70% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes popBounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes bounce {
+            0% { transform: scale(0.3); }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* ====== 시작 전 단축키 시범 모달 ====== */
+        .intro-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .intro-content {
+            background: #16213e;
+            border: 8px solid #4ecc71;
+            border-radius: 40px;
+            padding: 40px 55px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(78, 204, 113, 0.3);
+            animation: bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 90vw;
+        }
+        .intro-content h2 {
+            font-size: 38px;
+            color: #00f2fe;
+            margin: 0 0 30px 0;
+        }
+        /* 🖮 미니 키보드 그림 */
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            background: #0c1220;
+            padding: 18px;
+            border-radius: 18px;
+            border: 3px solid #2b3555;
+            margin-bottom: 20px;
+        }
+        .kb-row {
+            display: flex;
+            gap: 7px;
+            justify-content: center;
+        }
+        .kb-key {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #7c86a8;
+            background: #222b45;
+            border: 1px solid #3a4568;
+            border-radius: 8px;
+            box-shadow: 0 4px 0 #050810;
+        }
+        .kb-key.ctrl-key { width: 78px; font-size: 14px; }
+        .kb-key.space-key { width: 200px; }
+        .kb-key.blank-key { color: transparent; }
+
+        .kb-key.ctrl-key { animation: ctrlPress 10s infinite; }
+        .kb-key.c-key { animation: cPress 10s infinite; }
+        .kb-key.v-key { animation: vPress 10s infinite; }
+
+        @keyframes ctrlPress {
+            0%, 8%, 42%, 58%, 92%, 100% { transform: translateY(0); box-shadow: 0 4px 0 #050810; background: #222b45; color: #7c86a8; }
+            15%, 35% { transform: translateY(4px); box-shadow: 0 0 0 #050810; background: #4ecc71; color: #111625; }
+            65%, 85% { transform: translateY(4px); box-shadow: 0 0 0 #050810; background: #ff8fd8; color: #111625; }
+        }
+        @keyframes cPress {
+            0%, 8%, 42%, 100% { transform: translateY(0); box-shadow: 0 4px 0 #050810; background: #222b45; color: #7c86a8; }
+            15%, 35% { transform: translateY(4px); box-shadow: 0 0 0 #050810; background: #4ecc71; color: #111625; }
+        }
+        @keyframes vPress {
+            0%, 58%, 92%, 100% { transform: translateY(0); box-shadow: 0 4px 0 #050810; background: #222b45; color: #7c86a8; }
+            65%, 85% { transform: translateY(4px); box-shadow: 0 0 0 #050810; background: #ff8fd8; color: #111625; }
+        }
+
+        /* 키가 눌리는 타이밍에 맞춰 뜨는 한글 라벨 */
+        .combo-label-wrap {
+            position: relative;
+            height: 44px;
+            margin: -4px 0 20px 0;
+        }
+        .combo-label {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            font-size: 30px;
+            opacity: 0;
+        }
+        .combo-label.copy-label { color: #4ecc71; animation: labelCopy 10s infinite; }
+        .combo-label.paste-label { color: #ff8fd8; animation: labelPaste 10s infinite; }
+
+        @keyframes labelCopy {
+            0%, 10%, 40%, 100% { opacity: 0; transform: translateY(8px) scale(0.85); }
+            18%, 32% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes labelPaste {
+            0%, 60%, 90%, 100% { opacity: 0; transform: translateY(8px) scale(0.85); }
+            68%, 82% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .key-legend {
+            display: flex;
+            justify-content: center;
+            gap: 22px;
+            font-size: 20px;
+            color: #e0e0e0;
+            margin-bottom: 24px;
+        }
+        .key-legend span.dot {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .dot.green { background: #4ecc71; }
+        .dot.pink { background: #ff8fd8; }
+
+        .intro-desc {
+            font-size: 24px;
+            color: #e0e0e0;
+            line-height: 1.6;
+            margin: 0 0 30px 0;
+        }
+        .intro-start-btn {
+            background: #4ecc71;
+            color: white;
+            border: none;
+            padding: 16px 50px;
+            font-size: 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px #27ae60;
+            transition: all 0.1s;
+        }
+        .intro-start-btn:hover { background: #5edb81; }
+        .intro-start-btn:active { transform: translateY(6px); box-shadow: 0 2px #27ae60; }
+    </style>
+</head>
+<body>
+
+    <div id="intro-modal" class="intro-overlay">
+        <div class="intro-content">
+            <h2>⌨️ 복사 & 붙여넣기 단축키!</h2>
+            <div class="keyboard">
+                <div class="kb-row">
+                    <div class="kb-key">Q</div><div class="kb-key">W</div><div class="kb-key">E</div><div class="kb-key">R</div><div class="kb-key">T</div><div class="kb-key">Y</div><div class="kb-key">U</div><div class="kb-key">I</div><div class="kb-key">O</div><div class="kb-key">P</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key">A</div><div class="kb-key">S</div><div class="kb-key">D</div><div class="kb-key">F</div><div class="kb-key">G</div><div class="kb-key">H</div><div class="kb-key">J</div><div class="kb-key">K</div><div class="kb-key">L</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key">Z</div><div class="kb-key">X</div><div class="kb-key c-key">C</div><div class="kb-key v-key">V</div><div class="kb-key">B</div><div class="kb-key">N</div><div class="kb-key">M</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key ctrl-key">Ctrl</div>
+                    <div class="kb-key blank-key">Alt</div>
+                    <div class="kb-key space-key"></div>
+                    <div class="kb-key blank-key">Alt</div>
+                    <div class="kb-key ctrl-key">Ctrl</div>
+                </div>
+            </div>
+            <div class="combo-label-wrap">
+                <div class="combo-label copy-label">✅ 복사!</div>
+                <div class="combo-label paste-label">✅ 붙여넣기!</div>
+            </div>
+            <div class="key-legend">
+                <span><span class="dot green"></span>Ctrl + C = 복사</span>
+                <span><span class="dot pink"></span>Ctrl + V = 붙여넣기</span>
+            </div>
+            <p class="intro-desc"><b>Ctrl</b>은 키보드 맨 아래 <br>양쪽 구석에 있어요! 👇</p>
+            <button id="intro-start-btn" class="intro-start-btn">시작할게요! 👽</button>
+        </div>
+    </div>
+
+    <a href="./" class="home-btn">🏠 처음으로</a>
+
+    <h1>🛸 아기 외계인 복사하기 게임! 🛸</h1>
+    <p class="info">외계인을 똑같이 복사해서 우주선에 가득 태워주세요!</p>
+
+    <div class="game-container">
+        <!-- 초기 상태: 왼쪽 구역 반짝임 -->
+        <div class="copy-zone active-pulse-left" id="zone-left">
+            <h3>① 외계인 클릭 후<br><span class="key-badge">Ctrl + C</span></h3>
+            <div id="alien" class="alien-source" tabindex="0">👽</div>
+            <!-- 손가락이 위쪽 외계인을 가리키도록 변경 -->
+            <div id="copy-hint">👆 먼저 눌러보세요!</div>
+        </div>
+
+        <!-- 초기 상태: 오른쪽 구역 비활성화 -->
+        <div class="paste-zone disabled-zone" id="zone-right">
+            <h3>② 여기서 우주선 클릭!</h3>
+            <div class="ufo-bg">🛸</div>
+            <div id="target" class="target-marker"></div>
+        </div>
+    </div>
+
+    <!-- 하단 안내 문구 파격 강조 -->
+    <div id="status-message">👉 <b>①번 외계인</b>을 <span class="highlight-text">마우스로 클릭!</span> 👈</div>
+    <div id="score-board">🛸 탑승한 외계인: <span id="count" style="color:#ff416c; font-size:44px;">0</span> / 10 마리</div>
+
+    <div id="success-screen" class="success-overlay">
+        <div class="success-content">
+            <h2>🎉 미션 성공! 🎉</h2>
+            <p style="font-size: 80px; margin: 15px 0;">👽🛸👽🛸👽</p>
+            <p>[복사]와 [붙여넣기]를 완벽하게 성공했어요!<br>컴퓨터 박사님이 되었네요! 대단해요! 👍</p>
+            <div class="btn-box">
+                <button class="restart-btn" onclick="resetGame()">한 번 더 놀기 🔄</button>
+                <a href="./" class="home-popup-btn">🏠 처음으로</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isCopied = false;
+        let isSelected = false;
+        let targetX = 0;
+        let targetY = 0;
+        let alienCount = 0;
+        let gameFinished = false;
+
+        const alien = document.getElementById('alien');
+        const zoneLeft = document.getElementById('zone-left');
+        const zoneRight = document.getElementById('zone-right');
+        const sky = document.getElementById('zone-right');
+        const target = document.getElementById('target');
+        const msg = document.getElementById('status-message');
+        const countTxt = document.getElementById('count');
+        const copyHint = document.getElementById('copy-hint');
+        const successScreen = document.getElementById('success-screen');
+
+        // 시작 전 단축키 시범 모달 닫기
+        document.getElementById('intro-start-btn').addEventListener('click', () => {
+            document.getElementById('intro-modal').style.display = 'none';
+        });
+
+        // 1. 외계인 클릭
+        alien.addEventListener('click', () => {
+            if(gameFinished) return;
+            isSelected = true;
+            alien.classList.add('selected');
+            msg.innerHTML = "👉 이제 키보드에서 <span class='highlight-text'>[Ctrl + C]</span>를 누르세요!";
+        });
+
+        // 2. 우주선 내부 클릭
+        sky.addEventListener('click', (e) => {
+            if(gameFinished) return;
+            
+            targetX = e.offsetX;
+            targetY = e.offsetY;
+
+            target.style.left = targetX + 'px';
+            target.style.top = targetY + 'px';
+            target.style.display = 'block';
+
+            if (isCopied) {
+                msg.innerHTML = "👉 이제 <span class='highlight-text'>[Ctrl + V]</span>를 누르면 외계인이 뿅! 👈";
+            } else {
+                msg.textContent = "⚠️ 먼저 ①번 외계인을 복사(Ctrl+C)해야 붙여넣을 수 있어요!";
+            }
+        });
+
+        // 3. 키보드 단축키 처리
+        window.addEventListener('keydown', (e) => {
+            if(gameFinished) return;
+            
+            const isCtrlPressed = e.ctrlKey || e.metaKey;
+            const key = e.key.toLowerCase();
+
+            // Ctrl + C (복사)
+            if (isCtrlPressed && key === 'c') {
+                if (isSelected) {
+                    isCopied = true;
+                    msg.innerHTML = "👉 ②번 우주선을 클릭하고 <span class='highlight-text'>[Ctrl + V]</span> 누르기! 👈";
+                    
+                    copyHint.innerText = "복사 완료! 👍";
+                    copyHint.classList.add('complete');
+                    
+                    // 왼쪽 반짝임 끄고, 오른쪽 활성화 및 반짝임 켜기
+                    zoneLeft.classList.remove('active-pulse-left');
+                    zoneRight.classList.remove('disabled-zone');
+                    zoneRight.classList.add('active-pulse-right');
+                    
+                    e.preventDefault();
+                }
+            }
+
+            // Ctrl + V (붙여넣기)
+            if (isCtrlPressed && key === 'v') {
+                if (isCopied) {
+                    e.preventDefault();
+
+                    const newAlien = document.createElement('div');
+                    newAlien.className = 'pasted-alien';
+                    newAlien.innerText = '👽';
+                    newAlien.style.left = targetX + 'px';
+                    newAlien.style.top = targetY + 'px';
+                    sky.appendChild(newAlien);
+
+                    alienCount++;
+                    countTxt.innerText = alienCount;
+
+                    if (alienCount >= 10) {
+                        gameFinished = true;
+                        zoneRight.classList.remove('active-pulse-right');
+                        setTimeout(() => {
+                            successScreen.style.display = 'flex';
+                        }, 200);
+                    } else {
+                        msg.innerHTML = "👉 우와! 뿅 생겨났어요! 계속해서 우주선 안을 클릭하고 <span class='highlight-text'>[Ctrl + V]</span>!";
+                    }
+                } else {
+                    msg.textContent = "⚠️ 복사를 먼저 해야 해요! 외계인을 클릭하고 [Ctrl + C]!";
+                }
+            }
+        });
+
+        // 🔄 게임 리셋 기능
+        function resetGame() {
+            isCopied = false;
+            isSelected = false;
+            alienCount = 0;
+            gameFinished = false;
+            
+            countTxt.innerText = '0';
+            successScreen.style.display = 'none';
+            alien.classList.remove('selected');
+            target.style.display = 'none';
+            
+            copyHint.innerText = "👆 먼저 눌러보세요!";
+            copyHint.classList.remove('complete');
+            
+            zoneRight.classList.add('disabled-zone');
+            zoneRight.classList.remove('active-pulse-right');
+            zoneLeft.classList.add('active-pulse-left');
+            
+            msg.innerHTML = "👉 <b>①번 외계인</b>을 <span class='highlight-text'>마우스로 클릭!</span> 👈";
+
+            const pastedAliens = document.querySelectorAll('.pasted-alien');
+            pastedAliens.forEach(el => el.remove());
+        }
+    </script>
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <a class="jj-badge" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>제작 : 잼잼클래쓰 ❤️ | <span>유튜브 채널 바로가기</span></a>
+</body>
+</html>

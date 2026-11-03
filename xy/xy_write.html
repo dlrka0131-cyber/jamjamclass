@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="stylesheet" href="../common.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐥 삐약이 좌표여행 🐥</title>
+    <style>
+        /* 온라인 웹 폰트 연결 */
+body {
+            font-family: 'ONEMobilePOP', sans-serif;
+            background-color: #192a56; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden; 
+        }
+
+        #main-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: stretch; 
+        }
+
+        #sidebar {
+            background-color: #ffffff;
+            border: 6px solid #686de0; 
+            border-radius: 40px; 
+            padding: 30px;
+            box-shadow: none; 
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 { 
+            color: #f9ca24; 
+            font-size: 35px; 
+            margin-bottom: 50px; 
+            margin-top: 0;
+            line-height: 1.2;
+            text-shadow: 2px 2px 0px #e1b12c; 
+        }
+
+        .info-box {
+            background-color: #f4f6f9;
+            width: 100%;
+	    box-sizing: border-box;
+            padding: 15px 0;
+            border-radius: 20px;
+            border: 3px dashed #a4b0be;
+            margin-bottom: 15px;
+            font-size: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box .label {
+            font-size: 20px;
+            color: #747d8c;
+        }
+
+        /* 좌표 통합 입력 영역 스타일 */
+        .input-group {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .coord-input {
+            width: 190px;
+            height: 50px;
+            font-size: 26px;
+            font-family: 'ONEMobilePOP', sans-serif;
+            text-align: center;
+            border: 3px solid #686de0;
+            border-radius: 15px;
+            outline: none;
+            color: #2f3542;
+            transition: all 0.2s;
+        }
+        
+        .coord-input:focus {
+            background-color: #f1f2f6;
+            border-color: #ff4757;
+        }
+
+        .coord-input:disabled {
+            background-color: #dcdde1;
+            border-color: #7f8fa6;
+            color: #7f8fa6;
+        }
+
+        .coord-input::placeholder {
+            color: #b2bec3;
+            font-size: 20px;
+        }
+
+        .submit-btn {
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 25px;
+            font-size: 24px;
+            font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .submit-btn:active { transform: scale(0.95); }
+        .submit-btn:disabled { background-color: #b2bec3; cursor: not-allowed; transform: none; }
+
+        #progress-display { color: #eb4d4b; font-weight: bold; font-size: 42px;}
+        #score-display { color: #f0932b; font-weight: bold; font-size: 42px;}
+
+        .sidebar-btn-group {
+            margin-top: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        #game-container {
+            background-color: #ffffff;
+            border: 6px solid #686de0; 
+            border-radius: 40px; 
+            padding: 20px;
+            box-shadow: none; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-area {
+            background-color: #fdfbf7;
+            border: 4px solid #30336b; 
+            border-radius: 25px;
+            width: 1100px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+            cursor: default; 
+            background-image: 
+                linear-gradient(to right, rgba(52, 73, 94, 0.25) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(52, 73, 94, 0.25) 1px, transparent 1px),
+                linear-gradient(to right, rgba(189, 195, 199, 0.4) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(189, 195, 199, 0.4) 1px, transparent 1px);
+            background-size: 
+                125px 125px, 125px 125px, 
+                25px 25px, 25px 25px;
+            background-position: 
+                550px 350px, 550px 350px, 
+                550px 350px, 550px 350px;
+        }
+
+        .axis { position: absolute; z-index: 5; pointer-events: none; }
+        .axis-x { 
+            background-color: #ff3838; 
+            width: 100%; height: 4px; 
+            top: 350px; left: 0; 
+            transform: translateY(-50%); 
+            box-shadow: 0 0 4px rgba(255, 56, 56, 0.5); 
+        }
+        .axis-y { 
+            background-color: #0984e3; 
+            width: 4px; height: 100%; 
+            left: 550px; top: 0; 
+            transform: translateX(-50%); 
+            box-shadow: 0 0 4px rgba(9, 132, 227, 0.5); 
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 18px; 
+            color: #2c3e50;
+            pointer-events: none;
+            z-index: 6;
+            background: rgba(253, 251, 247, 0.9);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 30; border-radius: 20px;
+        }
+        #result-overlay { display: none; }
+
+        .overlay h2 { font-size: 60px; color: #686de0; margin-bottom: 20px; text-shadow: none; }
+        .overlay p { font-size: 34px; color: #34495e; margin-bottom: 40px; }
+
+        #feedback-msg { font-size: 30px; color: #1e90ff; margin-top: 20px; margin-bottom: 40px; font-weight: bold; text-align: center; line-height: 1.4; }
+
+        /* ⭐️ 좌표 읽는 법 안내 모달 */
+        .info-btn {
+            background: none; border: 3px solid #686de0; color: #686de0; border-radius: 30px;
+            padding: 12px 26px; font-size: 22px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; margin-top: 18px;
+        }
+        .info-btn:active { transform: scale(0.97); }
+        #start-overlay { display: none; }
+        #howto-overlay { justify-content: center; }
+
+        /* 글자 대신 그림+애니메이션으로 보여주는 좌표 입력 방법 (2D 격자 + 타이핑) */
+        .howto-diagram { position: relative; width: 340px; height: 450px; margin-top: 2px; margin-bottom: 4px; }
+
+        .howto-caption { position: absolute; top: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 30px; font-weight: 900; font-family: 'ONEMobilePOP', sans-serif; opacity: 0; color: #686de0; }
+        .howto-caption-pos { animation: captionPos 16s ease-in-out infinite; }
+        .howto-caption-neg { animation: captionNeg 16s ease-in-out infinite; }
+        @keyframes captionPos { 0%, 2% { opacity: 0; } 4% { opacity: 1; } 47.5% { opacity: 1; } 49% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes captionNeg { 0%, 52% { opacity: 0; } 54% { opacity: 1; } 97.5% { opacity: 1; } 99% { opacity: 0; } 100% { opacity: 0; } }
+
+        .howto-input-row {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 6px;
+            background: #ffffff; border: 3px solid #686de0; border-radius: 16px;
+            padding: 10px 22px; font-size: 36px; font-weight: 900; font-family: 'ONEMobilePOP', sans-serif; color: #2f3542;
+        }
+        /* ⭐️ width를 ch 단위로 애니메이션하면 글꼴별 글자 폭 차이 때문에 실제 글자 뒤로 빈 칸이 남아 괄호가 밀려 보이는 문제가 있었음.
+           그래서 폭 대신 clip-path로 실제 글자 너비만큼만 잘라서 보여주는 방식으로 변경 → 항상 글자에 딱 맞게 나타남 */
+        .howto-typed { display: inline-block; overflow: hidden; white-space: nowrap; font-family: 'Arial', sans-serif; letter-spacing: 1px; clip-path: inset(0 100% 0 0); }
+        .howto-typed-pos { animation: typeRevealPos 16s infinite; }
+        .howto-typed-neg { animation: typeRevealNeg 16s infinite; }
+        @keyframes typeRevealPos { 0%, 31.3% { clip-path: inset(0 100% 0 0); } 31.4% { clip-path: inset(0 100% 0 0); animation-timing-function: steps(8, end); } 38.8% { clip-path: inset(0 0% 0 0); } 47.5% { clip-path: inset(0 0% 0 0); } 49% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 100% 0 0); } }
+        @keyframes typeRevealNeg { 0%, 81.3% { clip-path: inset(0 100% 0 0); } 81.4% { clip-path: inset(0 100% 0 0); animation-timing-function: steps(10, end); } 88.8% { clip-path: inset(0 0% 0 0); } 97.5% { clip-path: inset(0 0% 0 0); } 99% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 100% 0 0); } }
+
+        .howto-confirm {
+            position: absolute; top: 84px; left: 50%; transform: translate(-50%, 0) scale(0);
+            font-size: 36px; font-weight: 900; color: #2ed573; opacity: 0;
+            background: #ffffff; border: 3px solid #2ed573; border-radius: 30px; padding: 8px 24px;
+            white-space: nowrap;
+        }
+        .howto-confirm-pos { animation: confirmPopPos 16s ease-in-out infinite; }
+        .howto-confirm-neg { animation: confirmPopNeg 16s ease-in-out infinite; }
+        @keyframes confirmPopPos { 0%, 38.8% { opacity: 0; transform: translate(-50%, 0) scale(0); } 40% { opacity: 1; transform: translate(-50%, 0) scale(1.25); } 41% { opacity: 1; transform: translate(-50%, 0) scale(1); } 47.5% { opacity: 1; transform: translate(-50%, 0) scale(1); } 49% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 100% { opacity: 0; } }
+        @keyframes confirmPopNeg { 0%, 88.8% { opacity: 0; transform: translate(-50%, 0) scale(0); } 90% { opacity: 1; transform: translate(-50%, 0) scale(1.25); } 91% { opacity: 1; transform: translate(-50%, 0) scale(1); } 97.5% { opacity: 1; transform: translate(-50%, 0) scale(1); } 99% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 100% { opacity: 0; } }
+
+        /* ⭐️ 실제 게임(삐약이 좌표여행)처럼 X축으로 먼저 걸어간 뒤 Y축으로 이동하는 경로를 노란 선으로 그려서 보여줌 */
+        .howto-trail-x { position: absolute; height: 6px; background: rgba(241, 196, 15, 0.75); border-radius: 3px; transform: translateY(-50%); z-index: 3; }
+        .howto-trail-y { position: absolute; width: 6px; background: rgba(241, 196, 15, 0.75); border-radius: 3px; transform: translateX(-50%); z-index: 3; }
+        .howto-trail-x-pos { left: 170px; top: 280px; animation: trailXPos 16s linear infinite; }
+        .howto-trail-y-pos { left: 300px; bottom: 170px; animation: trailYPos 16s linear infinite; }
+        .howto-trail-x-neg { right: 170px; top: 280px; animation: trailXNeg 16s linear infinite; }
+        .howto-trail-y-neg { left: 40px; top: 280px; animation: trailYNeg 16s linear infinite; }
+        @keyframes trailXPos { 0% { width: 0; opacity: 0; } 2% { width: 0; opacity: 1; } 14.4% { width: 130px; opacity: 1; } 47.5% { width: 130px; opacity: 1; } 49% { opacity: 0; } 50% { width: 0; opacity: 0; } 100% { width: 0; opacity: 0; } }
+        @keyframes trailYPos { 0%, 16.3% { height: 0; opacity: 0; } 16.31% { opacity: 1; } 28.8% { height: 130px; opacity: 1; } 47.5% { height: 130px; opacity: 1; } 49% { opacity: 0; } 50% { height: 0; opacity: 0; } 100% { height: 0; opacity: 0; } }
+        @keyframes trailXNeg { 0%, 50% { width: 0; opacity: 0; } 52% { width: 0; opacity: 1; } 64.4% { width: 130px; opacity: 1; } 97.5% { width: 130px; opacity: 1; } 99% { opacity: 0; } 100% { width: 0; opacity: 0; } }
+        @keyframes trailYNeg { 0%, 66.3% { height: 0; opacity: 0; } 66.31% { opacity: 1; } 78.8% { height: 130px; opacity: 1; } 97.5% { height: 130px; opacity: 1; } 99% { opacity: 0; } 100% { height: 0; opacity: 0; } }
+
+        .howto-grid-axis { position: absolute; }
+        .howto-grid-axis-x { left: 20px; top: 280px; width: 300px; height: 5px; background: #ff3838; }
+        .howto-grid-axis-y { left: 170px; top: 140px; width: 5px; height: 280px; background: #0984e3; }
+
+        .howto-grid-tick-x { position: absolute; top: 290px; transform: translateX(-50%); font-size: 22px; font-weight: 800; color: #a8b3c4; font-family: 'Arial', sans-serif; }
+        .howto-grid-tick-y { position: absolute; left: 178px; transform: translateY(-50%); font-size: 22px; font-weight: 800; color: #a8b3c4; font-family: 'Arial', sans-serif; }
+        .howto-grid-zero { color: #2c3e50 !important; font-weight: 700; font-size: 12px; }
+
+        .howto-tick-target-pos { animation: tickHighlightPos 16s ease-in-out infinite; }
+        .howto-tick-target-neg { animation: tickHighlightNeg 16s ease-in-out infinite; }
+        @keyframes tickHighlightPos {
+            0%, 2% { color: #a8b3c4; transform: scale(1); }
+            4% { color: #ff4757; transform: scale(1.3); }
+            6% { color: #ff4757; transform: scale(1.15); }
+            47.5% { color: #ff4757; transform: scale(1.15); }
+            49% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        @keyframes tickHighlightNeg {
+            0%, 52% { color: #a8b3c4; transform: scale(1); }
+            54% { color: #ff4757; transform: scale(1.3); }
+            56% { color: #ff4757; transform: scale(1.15); }
+            97.5% { color: #ff4757; transform: scale(1.15); }
+            99% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        /* Y좌표 눈금은 삐약이가 X축 이동을 마치고 Y축으로 걷기 시작하는 시점(약 16%)에 맞춰 반짝임 */
+        .howto-tick-target-pos-y { animation: tickHighlightPosY 16s ease-in-out infinite; }
+        .howto-tick-target-neg-y { animation: tickHighlightNegY 16s ease-in-out infinite; }
+        @keyframes tickHighlightPosY {
+            0%, 16% { color: #a8b3c4; transform: scale(1); }
+            16.3% { color: #0984e3; transform: scale(1.3); }
+            18% { color: #0984e3; transform: scale(1.15); }
+            47.5% { color: #0984e3; transform: scale(1.15); }
+            49% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+        @keyframes tickHighlightNegY {
+            0%, 66% { color: #a8b3c4; transform: scale(1); }
+            66.3% { color: #0984e3; transform: scale(1.3); }
+            68% { color: #0984e3; transform: scale(1.15); }
+            97.5% { color: #0984e3; transform: scale(1.15); }
+            99% { color: #a8b3c4; transform: scale(1); }
+            100% { color: #a8b3c4; transform: scale(1); }
+        }
+
+        /* ⭐️ 실제 '삐약이 좌표여행' 게임처럼: 원점에서 출발 → X좌표만큼 먼저 이동 → 잠깐 멈춤 → Y좌표만큼 이동 → 도착해서 콩콩 뛰기 → (입력/확인 후) 사라짐 */
+        .howto-walk-chick { position: absolute; font-size: 40px; transform: translate(-50%, -75%); animation: chickWalk 16s ease-in-out infinite; z-index: 6; }
+        @keyframes chickWalk {
+            0%      { opacity: 0; left: 170px; top: 280px; transform: translate(-50%, -75%) scale(1); }
+            1%      { opacity: 1; }
+            2%      { left: 170px; top: 280px; }
+            14.4%   { left: 300px; top: 280px; }
+            16.3%   { left: 300px; top: 280px; }
+            28.8%   { left: 300px; top: 150px; }
+            30%     { transform: translate(-50%, -75%) scale(1.3); }
+            32%     { transform: translate(-50%, -75%) scale(1); }
+            47.5%   { left: 300px; top: 150px; opacity: 1; }
+            49%     { opacity: 0; }
+            50%     { opacity: 0; left: 170px; top: 280px; transform: translate(-50%, -75%) scale(1); }
+            52%     { opacity: 1; left: 170px; top: 280px; }
+            64.4%   { left: 40px; top: 280px; }
+            66.3%   { left: 40px; top: 280px; }
+            78.8%   { left: 40px; top: 410px; }
+            80%     { transform: translate(-50%, -75%) scale(1.3); }
+            82%     { transform: translate(-50%, -75%) scale(1); }
+            97.5%   { left: 40px; top: 410px; opacity: 1; }
+            99%     { opacity: 0; }
+            100%    { opacity: 0; left: 170px; top: 280px; }
+        }
+
+        .big-action-button {
+            background-color: #686de0; color: white; border: none; border-radius: 30px;
+            padding: 15px 30px; font-size: 32px; font-family: 'ONEMobilePOP', sans-serif;
+            cursor: pointer; transition: all 0.1s; 
+            box-shadow: none; 
+            width: 100%;
+        }
+        .big-action-button:active { transform: scale(0.97); }
+
+        .home-accent {
+            background-color: #f9ca24;
+            color: #2c3e50;
+            font-size: 26px;
+            padding: 12px 20px;
+        }
+
+        /* 삐약이 중심점을 올려서 발밑에 선이 오도록 변경 (translate Y값 -85%) */
+        #chick-target {
+            position: absolute; font-size: 65px; z-index: 10;
+            transform: translate(-50%, -85%); 
+            pointer-events: none;
+            display: none; 
+            transition: font-size 0.2s; 
+        }
+
+        /* 삐약이 걷는 애니메이션 */
+        @keyframes walk {
+            0%, 100% { transform: translate(-50%, -85%) rotate(0deg); }
+            25% { transform: translate(-50%, -85%) rotate(-15deg); }
+            75% { transform: translate(-50%, -85%) rotate(15deg); }
+        }
+        .walking { animation: walk 0.4s infinite; }
+        
+        /* 💛 정답 통통 튀는 애니메이션 */
+        @keyframes heartBounce {
+            0% { transform: translate(-50%, -85%) scale(1); }
+            50% { transform: translate(-50%, -85%) scale(1.4); }
+            100% { transform: translate(-50%, -85%) scale(1); }
+        }
+
+        /* 경로 선 (두껍고 반투명한 실선) */
+        .path-line {
+            stroke: rgba(241, 196, 15, 0.7); 
+            stroke-width: 14; 
+            stroke-linecap: round;
+        }
+
+        .feedback-tooltip {
+            position: absolute; background-color: #e74c3c; color: white;
+            padding: 8px 16px; border-radius: 12px; font-size: 24px; font-family: 'ONEMobilePOP', sans-serif;
+            pointer-events: none; transform: translate(-50%, -150%); z-index: 25;
+            animation: popOut 1.5s forwards; white-space: nowrap;
+        }
+
+        @keyframes popOut { 0% { opacity: 1; margin-top: 0;} 80% { opacity: 1; } 100% { opacity: 0; margin-top: -20px;} }
+    </style>
+</head>
+<body>
+
+    <div id="main-wrapper">
+        <div id="sidebar">
+            <h1>🐥 삐약이 좌표여행</h1>
+
+            <!-- 좌표 입력 박스 (통합형) -->
+            <div class="info-box" style="padding: 15px 10px;">
+                <span class="label">🎯 삐약이의 위치는?</span>
+                <div class="input-group">
+                    <span style="color:#2f3542; font-weight:bold; font-size:26px;">(</span>
+                    <input type="text" id="input-coord" class="coord-input" autocomplete="off" placeholder="예: 50, -50" disabled>
+                    <span style="color:#2f3542; font-weight:bold; font-size:26px;">)</span>
+                </div>
+                <button id="submit-btn" class="submit-btn" onclick="checkAnswer()" disabled>정답 확인!</button>
+            </div>
+
+            <div class="info-box">
+                <span class="label">📝 진행 상황</span>
+                <div><span id="progress-display">0</span> / 10</div>
+            </div>
+
+            <div class="info-box">
+                <span class="label">⭐ 점수</span>
+                <div><span id="score-display">0</span> 점</div>
+            </div>
+
+            <div class="sidebar-btn-group">
+                <button class="big-action-button home-accent" onclick="location.href='./'">🏠 처음으로 </button>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <div id="game-area">
+                <div class="axis axis-x"></div>
+                <div class="axis axis-y"></div>
+                
+                <!-- 삐약이가 지나가는 길 (실선) -->
+                <svg id="path-svg" width="1100" height="700" style="position:absolute; top:0; left:0; pointer-events:none; z-index:8;">
+                    <line id="line-x" class="path-line" x1="550" y1="350" x2="550" y2="350" />
+                    <line id="line-y" class="path-line" x1="550" y1="350" x2="550" y2="350" />
+                </svg>
+
+                <!-- 삐약이/하트 캐릭터 구역 -->
+                <div id="chick-target">🐥</div>
+
+                <div id="start-overlay" class="overlay">
+                    <h2>🐥 삐약이 좌표 여행!</h2>
+                    <p>중앙에서 출발한 삐약이의 도착 좌표를<br>콤마(,)와 함께 정확히 입력해 주세요!</p>
+                    <button class="big-action-button" onclick="startGame()" style="width: auto; padding: 20px 60px; font-size: 40px;">▶ 탐험 시작!</button>
+                </div>
+
+                <div id="howto-overlay" class="overlay">
+                    <h2 style="font-size: 36px; margin-top: 0; margin-bottom: 0; color: #30336b;">🔎 좌표 입력하는 법</h2>
+                    <div class="howto-diagram">
+                        <!-- ⭐️ 실제 게임에서는 목표 좌표를 알려주지 않고 삐약이가 이동한 자리를 보고 직접 써야 하므로, 정답을 미리 알려주는 "목표 좌표" 문구는 표시하지 않음 -->
+                        <div class="howto-input-row howto-caption-pos">( <span class="howto-typed howto-typed-pos">200, 100</span> )</div>
+                        <div class="howto-input-row howto-caption-neg">( <span class="howto-typed howto-typed-neg">-200, -100</span> )</div>
+
+                        <div class="howto-confirm howto-confirm-pos">✅ 확인!</div>
+                        <div class="howto-confirm howto-confirm-neg">✅ 확인!</div>
+
+                        <div class="howto-grid-axis howto-grid-axis-x"></div>
+                        <div class="howto-grid-axis howto-grid-axis-y"></div>
+
+                        <div class="howto-grid-tick-x howto-tick-target-neg" style="left:40px;">-200</div>
+                        <div class="howto-grid-tick-x howto-grid-zero" style="left:170px;">(0,0)</div>
+                        <div class="howto-grid-tick-x howto-tick-target-pos" style="left:300px;">200</div>
+
+                        <div class="howto-grid-tick-y howto-tick-target-pos-y" style="top:150px;">100</div>
+                        <div class="howto-grid-tick-y howto-tick-target-neg-y" style="top:410px;">-100</div>
+
+                        <!-- ⭐️ 실제 게임처럼 X축 먼저 → Y축 순서로 걸어가는 삐약이 이동 시뮬레이션 -->
+                        <div class="howto-trail-x howto-trail-x-pos"></div>
+                        <div class="howto-trail-y howto-trail-y-pos"></div>
+                        <div class="howto-trail-x howto-trail-x-neg"></div>
+                        <div class="howto-trail-y howto-trail-y-neg"></div>
+                        <div class="howto-walk-chick">🐥</div>
+                    </div>
+                    <button class="big-action-button" onclick="startGame()" style="width: auto; padding: 14px 46px; font-size: 30px;">🚀 탐험 시작!</button>
+                </div>
+
+                <div id="result-overlay" class="overlay">
+                    <h2>탐험 종료!</h2>
+                    <p style="margin-bottom: 20px;">내 최종 점수: <span id="final-score" style="color:#e74c3c; font-weight:bold;">0</span> 점!</p>
+                    <p id="feedback-msg"></p>
+                    <button id="next-btn" class="big-action-button" onclick="location.href='./'" style="width: auto; padding: 20px 60px; font-size: 40px; background-color:#2ed573; display:none;">🎉 모든 단계 완료! 처음으로</button>
+                    <button id="retry-btn" class="big-action-button" onclick="startGame()" style="width: auto; padding: 20px 60px; font-size: 40px;">🔄 다시하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const progressDisplay = document.getElementById('progress-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const startOverlay = document.getElementById('start-overlay');
+        const resultOverlay = document.getElementById('result-overlay');
+        const howtoOverlay = document.getElementById('howto-overlay');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const nextBtn = document.getElementById('next-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        const TARGET_SCORE = 70;
+
+        function showHowTo() {
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'flex';
+        }
+        function closeHowTo() {
+            howtoOverlay.style.display = 'none';
+            startOverlay.style.display = 'flex';
+        }
+
+        const chick = document.getElementById('chick-target');
+        const lineX = document.getElementById('line-x');
+        const lineY = document.getElementById('line-y');
+
+        const inputCoord = document.getElementById('input-coord');
+        const submitBtn = document.getElementById('submit-btn');
+
+        /* ⭐️ 1100x700 크기에 맞춘 정중앙 좌표 설정 */
+        const CENTER_X = 550;
+        const CENTER_Y = 350;
+        const SCALE = 2.5; 
+        
+        /* 애니메이션 속도 설정 (밀리초당 픽셀) - 매우 천천히 걷도록 */
+        const SPEED_MS_PER_PX = 8; 
+
+        // 눈금 그리기
+        function drawAxisLabels() {
+            for (let x = -200; x <= 200; x += 50) {
+                let label = document.createElement('div');
+                label.className = 'axis-label';
+                label.textContent = x === 0 ? '(0,0)' : x;
+                label.style.color = '#ff4757'; 
+                label.style.left = (x * SCALE + CENTER_X) + 'px';
+                label.style.top = (CENTER_Y + 8) + 'px'; 
+                label.style.transform = x === 0 ? 'translate(8px, 8px)' : 'translateX(-50%)'; 
+                gameArea.appendChild(label);
+            }
+            for (let y = -100; y <= 100; y += 50) {
+                if (y !== 0) {
+                    let label = document.createElement('div');
+                    label.className = 'axis-label';
+                    label.textContent = y;
+                    label.style.color = '#1e90ff'; 
+                    label.style.left = (CENTER_X + 8) + 'px';
+                    label.style.top = (-y * SCALE + CENTER_Y) + 'px';
+                    label.style.transform = 'translateY(-50%)';
+                    gameArea.appendChild(label);
+                }
+            }
+        }
+        drawAxisLabels();
+
+        let currentProblem = 1;
+        const MAX_PROBLEMS = 10;
+        let score = 0;
+        let targetX = 0;
+        let targetY = 0;
+        let isAnimating = false;
+
+        const xOptions = [-200, -150, -100, -50, 0, 50, 100, 150, 200];
+        const yOptions = [-100, -50, 0, 50, 100];
+
+        // 효과음 함수
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                if(type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1046.50, now); 
+                    osc.frequency.setValueAtTime(1318.51, now + 0.1); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now); osc.stop(now + 0.5);
+                } else if(type === 'miss') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                }
+            } catch(e) {}
+        }
+
+        function startGame() {
+            currentProblem = 1;
+            score = 0;
+            scoreDisplay.textContent = score;
+            
+            inputCoord.value = '';
+
+            startOverlay.style.display = 'none';
+            howtoOverlay.style.display = 'none';
+            resultOverlay.style.display = 'none';
+            chick.style.display = 'block';
+
+            document.querySelectorAll('.feedback-tooltip').forEach(el => el.remove());
+
+            playNextProblem();
+        }
+
+        function playNextProblem() {
+            if (currentProblem > MAX_PROBLEMS) {
+                endGame();
+                return;
+            }
+
+            progressDisplay.textContent = currentProblem;
+            
+            // 너무 쉬운 (0,0) 문제는 나오지 않게 필터링
+            do {
+                targetX = xOptions[Math.floor(Math.random() * xOptions.length)];
+                targetY = yOptions[Math.floor(Math.random() * yOptions.length)];
+            } while (targetX === 0 && targetY === 0);
+
+            animateChick();
+        }
+
+        // 삐약이 천천히 선을 그리며 이동
+        function animateChick() {
+            isAnimating = true;
+            
+            // 입력 잠금
+            inputCoord.disabled = true;
+            submitBtn.disabled = true;
+
+            // 1. 캐릭터 리셋
+            chick.textContent = '🐥';
+            chick.style.fontSize = '65px';
+            chick.style.animation = 'none';
+            
+            // 트랜지션 해제 및 시작 위치(중앙) 지정
+            chick.style.transition = 'none';
+            lineX.style.transition = 'none';
+            lineY.style.transition = 'none';
+
+            chick.style.left = CENTER_X + 'px';
+            chick.style.top = CENTER_Y + 'px';
+            
+            let destX_px = CENTER_X + targetX * SCALE;
+            let destY_px = CENTER_Y - targetY * SCALE;
+
+            // 2. 그려질 선의 길이(px) 계산
+            let lenX = Math.abs(destX_px - CENTER_X);
+            let lenY = Math.abs(destY_px - CENTER_Y);
+
+            // 3. X선 SVG 설정 (미리 숨겨둠)
+            lineX.setAttribute('x1', CENTER_X);
+            lineX.setAttribute('y1', CENTER_Y);
+            lineX.setAttribute('x2', destX_px);
+            lineX.setAttribute('y2', CENTER_Y);
+            lineX.style.strokeDasharray = lenX;
+            lineX.style.strokeDashoffset = lenX; 
+            
+            // 4. Y선 SVG 설정 (미리 숨겨둠)
+            lineY.setAttribute('x1', destX_px);
+            lineY.setAttribute('y1', CENTER_Y);
+            lineY.setAttribute('x2', destX_px);
+            lineY.setAttribute('y2', destY_px);
+            lineY.style.strokeDasharray = lenY;
+            lineY.style.strokeDashoffset = lenY; 
+
+            // 강제 리플로우로 초기 위치 즉시 렌더링
+            void chick.offsetWidth;
+            
+            // 거리에 따른 이동 시간(ms) 계산 (동일한 속도 보장)
+            let timeX = lenX * SPEED_MS_PER_PX;
+            let timeY = lenY * SPEED_MS_PER_PX;
+
+            chick.classList.add('walking');
+
+            // X축 먼저 이동
+            if (timeX > 0) {
+                chick.style.transition = `left ${timeX}ms linear`;
+                lineX.style.transition = `stroke-dashoffset ${timeX}ms linear`;
+                chick.style.left = destX_px + 'px';
+                lineX.style.strokeDashoffset = 0; // 서서히 그려짐
+            }
+
+            // X축 이동 끝난 후 Y축 이동
+            setTimeout(() => {
+                if (timeY > 0) {
+                    chick.style.transition = `top ${timeY}ms linear`;
+                    lineY.style.transition = `stroke-dashoffset ${timeY}ms linear`;
+                    chick.style.top = destY_px + 'px';
+                    lineY.style.strokeDashoffset = 0; // 서서히 그려짐
+                }
+                
+                // Y축 이동까지 완전히 끝나면 입력창 활성화
+                setTimeout(() => {
+                    chick.classList.remove('walking');
+                    isAnimating = false;
+                    
+                    inputCoord.disabled = false;
+                    submitBtn.disabled = false;
+                    inputCoord.focus();
+                }, timeY);
+
+            }, timeX);
+        }
+
+        // 콤마가 포함된 정답 확인
+        function checkAnswer() {
+            if (isAnimating || startOverlay.style.display !== 'none') return;
+
+            const rawValue = inputCoord.value;
+            // 정규식: (옵션 괄호) 숫자 , 숫자 (옵션 괄호) 형태를 모두 허용
+            const match = rawValue.match(/^\s*\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?\s*$/);
+
+            if (!match) {
+                showTooltip("X, Y 좌표를 콤마(,)로 구분해서 입력해주세요! 예) 50, -50");
+                return;
+            }
+
+            const userX = parseInt(match[1], 10);
+            const userY = parseInt(match[2], 10);
+
+            if (userX === targetX && userY === targetY) {
+                // 정답: 노란 하트로 변신 💛
+                playSound('success');
+                score += 10; 
+                scoreDisplay.textContent = score;
+                
+                inputCoord.value = '';
+                // ⭐️ 연타 방지: 다음 문제로 넘어가기 전까지 입력 잠금 (같은 답을 다시 눌러 중복 득점하는 것 방지)
+                isAnimating = true;
+                inputCoord.disabled = true;
+                submitBtn.disabled = true;
+                
+                chick.textContent = '💛';
+                chick.style.fontSize = '80px';
+                chick.style.animation = 'heartBounce 0.5s ease-out';
+
+                showTooltip("정답! 👏", true);
+                
+                currentProblem++;
+                setTimeout(() => {
+                    playNextProblem();
+                }, 1300);
+
+            } else {
+                // 오답: X 마크로 잠시 변신 ❌
+                playSound('miss');
+                showTooltip("앗, 다시 관찰해봐요!");
+                
+                chick.textContent = '❌';
+                chick.style.fontSize = '70px';
+                
+                inputCoord.value = '';
+                inputCoord.focus();
+
+                // 1초 뒤에 다시 삐약이로 원상 복구
+                setTimeout(() => {
+                    if (chick.textContent === '❌') {
+                        chick.textContent = '🐥';
+                        chick.style.fontSize = '65px';
+                    }
+                }, 1200);
+            }
+        }
+
+        // 안내 툴팁
+        function showTooltip(msg, isSuccess = false) {
+            document.querySelectorAll('.feedback-tooltip').forEach(el => el.remove());
+            const tooltip = document.createElement('div');
+            tooltip.className = 'feedback-tooltip';
+            tooltip.textContent = msg;
+            
+            if (isSuccess) {
+                tooltip.style.backgroundColor = '#f1c40f'; // 정답일 땐 밝은 노란색
+                tooltip.style.color = '#2f3542';
+                tooltip.style.fontWeight = 'bold';
+                tooltip.style.fontSize = '28px';
+            }
+
+            // 삐약이 머리 위쪽 중앙 쯤에 띄움
+            tooltip.style.left = CENTER_X + 'px';
+            tooltip.style.top = (CENTER_Y - 150) + 'px';
+            
+            gameArea.appendChild(tooltip);
+            setTimeout(() => tooltip.remove(), 1500);
+        }
+
+        // 엔터키 연동
+        inputCoord.addEventListener("keyup", function(event) {
+            if (event.key === "Enter" && !isAnimating) checkAnswer();
+        });
+
+        function endGame() {
+            chick.style.display = 'none';
+            document.getElementById('final-score').textContent = score;
+
+            if (score === 100) {
+                feedbackMsg.innerHTML = "와우! 100점 만점이에요!<br>X, Y 좌표 완벽 이해! 🚀";
+                feedbackMsg.style.color = "#ff4757";
+            } else if (score >= 70) {
+                feedbackMsg.innerHTML = "참 잘했어요!<br>삐약이의 노란 길을 보고 좌표를 훌륭히 맞췄어요! 👏";
+                feedbackMsg.style.color = "#f0932b";
+            } else {
+                feedbackMsg.innerHTML = "끝까지 완료했어요!<br>콤마(,)를 사용해 묶어 적는 방법을 조금만 더 연습해요! 💪";
+                feedbackMsg.style.color = "#1e90ff";
+            }
+
+            if (score >= TARGET_SCORE) {
+                nextBtn.style.display = 'block';
+                retryBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'none';
+                retryBtn.style.display = 'block';
+            }
+
+            resultOverlay.style.display = 'flex';
+        }
+    </script>
+    <script>
+        // ⭐️ F12(개발자 도구) 및 관련 단축키 비활성화 - 학생들이 실수로 눌러서 화면이 이상해지는 것 방지용
+        document.addEventListener('keydown', function (e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <a class="jj-badge" href="https://www.youtube.com/@jamjamclass" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11 5.5v9l7.5-4.5z" fill="#fff"/></svg>제작 : 잼잼클래쓰 ❤️ | <span>유튜브 채널 바로가기</span></a>
+</body>
+</html>
