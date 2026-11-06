@@ -323,7 +323,7 @@ $('check').onclick = () => {
         solved = true; render();
         celebrate();
         m.className = 'msg';
-        m.textContent = '';
+        m.textContent = q.why || '';
         $('check').hidden = true; $('again').hidden = true; $('next').hidden = false;
         $('next').textContent = qi + 1 >= LEVELS[lv].qs.length ? '결과 보기 ▶' : '다음 문제 ▶';
     } else {
